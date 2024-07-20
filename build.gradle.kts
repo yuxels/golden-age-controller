@@ -94,9 +94,6 @@ dependencies {
     implementation(libs.jna)
     implementation(libs.guava)
     implementation(libs.jankson)
-    modImplementation(libs.glass.config.api) {
-        isTransitive = false
-    }
     modImplementation(libs.mod.menu) {
         isTransitive = false
     }
@@ -122,7 +119,7 @@ tasks.processResources {
 
 val sdl3Version = libs.versions.sdl4j.get().substringBefore("-")
 val baseUrl = "https://maven.isxander.dev/releases/dev/isxander/libsdl4j-natives/$sdl3Version"
-val destDir = project.layout.projectDirectory.dir("src/main/resources/sdl3-natives")
+val destDir = project.layout.buildDirectory.dir("sdl3-natives").get().asFile
 val nativesUrls = listOf(
     "windows64.dll" to "Windows64",
     "windows32.dll" to "Windows32",
@@ -138,7 +135,7 @@ nativesUrls.forEach { (key, it) ->
     val (fileName, taskName) = key
     tasks.register<Download>(taskName) {
         src(it)
-        dest(File(destDir.asFile, fileName))
+        dest(File(destDir, fileName))
     }
 }
 
@@ -150,6 +147,22 @@ val downloadSDL3Natives = tasks.register("downloadSDL3Natives") {
     }
 }
 
-tasks.build {
-    dependsOn(downloadSDL3Natives)
+sourceSets {
+    main {
+        resources {
+            srcDirs(destDir)
+        }
+    }
+}
+
+tasks {
+    build {
+        dependsOn(downloadSDL3Natives)
+    }
+    processResources {
+        dependsOn(downloadSDL3Natives)
+    }
+    named("sourcesJar") {
+        dependsOn(downloadSDL3Natives)
+    }
 }

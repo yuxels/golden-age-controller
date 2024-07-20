@@ -20,11 +20,10 @@ public class ControllerConfigScreen {
     private static void controllerComponent(List<ScrollableScreenComponent> list) {
         list.add(ScrollableScreenComponent.text()
                 .message("Select a controller to be used")
-                //.layout(ScrollableScreenLayout.padding(8, 8, 0, 8))
                 .backgroundColor(-1));
         list.add(ScrollableScreenComponent.dropdown()
                 .selectedValue(
-                        ControllerSupport.support().manager().currentController().map(c -> c.id().name())
+                        ControllerSupport.support().manager().currentController().map(ControllerConfigScreen::id)
                                 .orElse("No controller found.")
                 )
                 .options(ControllerSupport.support().manager().findAllGamepads()
