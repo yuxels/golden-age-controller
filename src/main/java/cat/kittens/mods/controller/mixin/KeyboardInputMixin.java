@@ -9,7 +9,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(class_413.class)
 public class KeyboardInputMixin {
-    @Inject(method = "method_1942", at = @At(value = "TAIL"))
+    @Inject(
+            method = "method_1942",
+            at = @At(
+                    value = "FIELD",
+                    target = "Lnet/minecraft/class_413;field_2536:Z",
+                    ordinal = 0,
+                    shift = At.Shift.AFTER
+            )
+    )
     void controller$tick(CallbackInfo ignored) {
         ControllerSupport.support().movement().tick();
     }
