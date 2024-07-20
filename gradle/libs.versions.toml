@@ -1,0 +1,42 @@
+[versions]
+minecraft = "b1.7.3"
+fabric-loom = "1.7.2"
+babric-loom-extension = "1.7.3"
+babric-loader = "0.15.6-babric.2"
+mappings = "b1.7.3+0ec7dcc"
+#mappings = "b1.7.3+build.30"
+sdl4j = "3.6896c4c-38"
+download = "5.6.0"
+slf4j = "1.8.0-beta4"
+log4j = "2.16.0"
+commons-lang3 = "3.14.0"
+jna = "5.14.0"
+glass-config-api = "2.0.2"
+mod-menu = "v1.8.5-beta.3"
+guava = "33.2.1-jre"
+jankson = "1.2.3"
+station-api = "2.0-alpha.2"
+
+[libraries]
+sdl4j = { module = "dev.isxander:libsdl4j", version.ref = "sdl4j" }
+mappings = { module = "net.glasslauncher:biny", version.ref = "mappings" }
+#mappings = { module = "me.alphamode:nostalgia", version.ref = "mappings" }
+babric-loader = { module = "babric:fabric-loader", version.ref = "babric-loader" }
+minecraft = { module = "com.mojang:minecraft", version.ref = "minecraft" }
+slf4j = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+log4j = { module = "org.apache.logging.log4j:log4j-slf4j18-impl", version.ref = "log4j" }
+commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
+jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
+glass-config-api = { module = "net.glasslauncher.mods:GlassConfigAPI", version.ref = "glass-config-api" }
+mod-menu = { module = "com.github.calmilamsy:ModMenu", version.ref = "mod-menu" }
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
+jankson = { module = "blue.endless:jankson", version.ref = "jankson" }
+station-api = { module = "net.modificationstation:StationAPI", version.ref = "station-api" }
+
+[plugins]
+download = { id = "de.undercouch.download", version.ref = "download" }
+fabric-loom = { id = "fabric-loom", version.ref = "fabric-loom" }
+babric-loom-extension = { id = "babric-loom-extension", version.ref = "babric-loom-extension" }
+
+[bundles]
+log = ["slf4j", "log4j"]

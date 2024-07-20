@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "controller",
+  "version": "${version}",
+  "name": "Controller Support",
+  "description": "SDL3-based controller mod for Babric.",
+  "authors": [
+    "ayuxified <ayuxified@kittens.cat>"
+  ],
+  "contact": {
+    "homepage": "https://codeberg.org/ayuxified/babric-controller",
+    "sources": "https://codeberg.org/ayuxified/babric-controller",
+    "issues": "https://codeberg.org/ayuxified/babric-controller/issues"
+  },
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "cat.kittens.mods.controller.ControllerSupport"
+    ]
+  },
+  "mixins": [
+    "controller.mixins.json"
+  ],
+  "depends": {
+    "minecraft": "1.0.0-beta.7.3"
+  }
+}

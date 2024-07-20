@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "cat.kittens.mods.controller.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "client": [
+    "KeyboardInputMixin",
+    "MinecraftMixin",
+    "ScreenMixin",
+    "accessor.MinecraftAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "plugin": "cat.kittens.mods.controller.ControllerModMixinConfigPlugin",
+  "mixins": [
+    "integration.ModMenuMixin"
+  ]
+}
