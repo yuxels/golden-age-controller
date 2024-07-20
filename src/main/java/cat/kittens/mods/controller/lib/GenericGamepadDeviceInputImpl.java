@@ -33,7 +33,7 @@ public class GenericGamepadDeviceInputImpl implements IGamepadDevice.Input {
 
     @Override
     public float getDeadZone(Axis axis) {
-        return deadZones.getOrDefault(axis, 0.08f);
+        return deadZones.getOrDefault(axis, 0.25f);
     }
 
     @Override

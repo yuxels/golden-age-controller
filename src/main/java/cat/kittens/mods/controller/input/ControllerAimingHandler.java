@@ -23,6 +23,8 @@ public class ControllerAimingHandler {
     }
 
     public void processInput(IGamepadDevice<IGamepadDeviceId> gamepad) {
+        if (MinecraftAccessor.instance().currentScreen != null)
+            return;
         double x = gamepad.chord().getAxisValue(ActionIds.AIM_RIGHT).orElse(0) -
                 gamepad.chord().getAxisValue(ActionIds.AIM_LEFT).orElse(0);
         double y = gamepad.chord().getAxisValue(ActionIds.AIM_UP).orElse(0) -
@@ -33,6 +35,8 @@ public class ControllerAimingHandler {
     }
 
     public void externalize() {
+        if (MinecraftAccessor.instance().currentScreen != null || (aimX == 0 && aimY == 0))
+            return;
         float delta = ((MinecraftAccessor) MinecraftAccessor.instance()).timer().field_2370;
         MinecraftAccessor.instance().player
                 .method_1362((float) aimX / 0.15f * delta, (float) aimY / 0.15f * delta);

@@ -6,7 +6,6 @@ import net.minecraft.client.Minecraft;
 import java.util.Collections;
 import java.util.Map;
 import java.util.OptionalDouble;
-import java.util.OptionalLong;
 
 public interface IControllerMapping {
     /**
@@ -16,9 +15,9 @@ public interface IControllerMapping {
      * @param value The axis value.
      * @param hold Whether the action is being held for more than one cycle.
      */
-    record Context(Minecraft minecraft, OptionalLong durationMillis, OptionalDouble value, boolean hold) {
+    record Context(Minecraft minecraft, Long durationMillis, OptionalDouble value, boolean hold) {
         public boolean release() {
-            return durationMillis.isEmpty();
+            return durationMillis == -1;
         }
     }
 
@@ -72,7 +71,10 @@ public interface IControllerMapping {
 
                 @Override
                 public boolean equals(Object obj) {
-                    return value.equals(obj);
+                    if (obj instanceof ActionId id) {
+                        return id.toString().equals(toString());
+                    }
+                    return false;
                 }
 
                 @Override

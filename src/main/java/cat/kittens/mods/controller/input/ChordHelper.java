@@ -27,6 +27,10 @@ public record ChordHelper(IGamepadDevice<?> controller, Set<IControllerMapping.A
                 (buttonChordActive && axisChordActive);
     }
 
+    public boolean shouldPerform(IControllerMapping.ActionId id) {
+        return shouldPerform(ControllerSupport.support().mapping().getActions().get(id));
+    }
+
     public OptionalDouble getAxisValue(IControllerMapping.Action action) {
         if (!shouldPerform(action))
             return OptionalDouble.empty();
@@ -38,9 +42,10 @@ public record ChordHelper(IGamepadDevice<?> controller, Set<IControllerMapping.A
     public OptionalLong getButtonDuration(IControllerMapping.Action action) {
         if (!shouldPerform(action))
             return OptionalLong.empty();
-        return action.buttonChord().keySet().stream()
+        return OptionalLong.of(action.buttonChord().keySet().stream()
                 .flatMapToLong(b -> controller.input().getPressDuration(b).stream())
-                .min();
+                .min()
+                .orElse(0));
     }
 
     public OptionalDouble getAxisValue(IControllerMapping.ActionId id) {
@@ -56,13 +61,13 @@ public record ChordHelper(IGamepadDevice<?> controller, Set<IControllerMapping.A
             OptionalLong buttonDuration = getButtonDuration(action);
             OptionalDouble axisValue = getAxisValue(action);
             IControllerMapping.Context ctx = new IControllerMapping
-                    .Context(MinecraftAccessor.instance(), buttonDuration, axisValue, shouldRevert(id));
+                    .Context(MinecraftAccessor.instance(), buttonDuration.orElse(0), axisValue, shouldRevert(id));
             action.executor().perform(ctx);
             reversionQueue.add(id);
             return true;
         } else if (shouldRevert(id)) {
             IControllerMapping.Context ctx = new IControllerMapping
-                    .Context(MinecraftAccessor.instance(), OptionalLong.empty(), OptionalDouble.empty(), false);
+                    .Context(MinecraftAccessor.instance(), -1L, OptionalDouble.empty(), false);
             action.executor().perform(ctx);
             reversionQueue.remove(id);
         }
@@ -81,7 +86,7 @@ public record ChordHelper(IGamepadDevice<?> controller, Set<IControllerMapping.A
     public boolean performAll(IControllerMapping mapping) {
         boolean any = false;
         for (var action : mapping.getActions().entrySet()) {
-            if (tryPerform(action.getKey(), action.getValue()))
+            if (!action.getValue().offTick() && tryPerform(action.getKey(), action.getValue()))
                 any = true;
         }
         return any;

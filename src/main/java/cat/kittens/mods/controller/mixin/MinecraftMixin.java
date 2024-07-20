@@ -4,14 +4,19 @@ import cat.kittens.mods.controller.ControllerSupport;
 import cat.kittens.mods.controller.input.ActionIds;
 import cat.kittens.mods.controller.mixin.accessor.MinecraftAccessor;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screen.Screen;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Minecraft.class)
 public abstract class MinecraftMixin {
+    @Shadow public Screen currentScreen;
+
     // Prevent LWJGL2's controller API to be initialized, since we are going to use SDL3 for this.
     @Redirect(
             method = "init",
@@ -43,43 +48,28 @@ public abstract class MinecraftMixin {
         ControllerSupport.support().aiming().tick();
     }
 
-    @Inject(
-            method = "tick",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/client/Minecraft;method_2110(IZ)V",
-                    shift = At.Shift.AFTER
-            )
-    )
-    void controller$tick(CallbackInfo callback) {
-        ControllerSupport.support().manager().currentController().ifPresent(controller -> {
-            MinecraftAccessor mc = (MinecraftAccessor) this;
-            if (mc.lastInteraction() > mc.currentTicks()) {
-                mc.setLastInteraction(mc.currentTicks());
-            }
-            if (controller.chord().performAll(ControllerSupport.support().mapping())) {
-                ControllerSupport.support().setCurrentInputMethod(true);
-            }
-        });
-    }
-
-    @Redirect(
+    @ModifyArg(
             method = "tick",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/Minecraft;method_2110(IZ)V"
-            )
+            ),
+            index = 1
     )
-    void controller$preventControllerConflicts$1(Minecraft instance, int bl, boolean b) {
-        if (!ControllerSupport.support().isCurrentInputMethodController()) {
-            ((MinecraftAccessor) instance).holdInteract(bl, b);
-            return;
+    boolean controller$tick(boolean bl) {
+        if (bl || currentScreen != null || !ControllerSupport.support().isCurrentInputMethodController())
+            return bl;
+        var controller = ControllerSupport.support().manager().currentController().orElse(null);
+        if (controller == null)
+            return false;
+        MinecraftAccessor mc = (MinecraftAccessor) this;
+        if (mc.lastInteraction() > mc.currentTicks()) {
+            mc.setLastInteraction(mc.currentTicks());
         }
-        ControllerSupport.support().manager().currentController().ifPresent(controller -> {
-            boolean active = controller.chord()
-                    .shouldPerform(ControllerSupport.support().mapping().getActions().get(ActionIds.BREAK));
-            ((MinecraftAccessor) instance).holdInteract(bl, active);
-        });
+        if (controller.chord().performAll(ControllerSupport.support().mapping())) {
+            ControllerSupport.support().setCurrentInputMethod(true);
+        }
+        return controller.chord().shouldPerform(ActionIds.BREAK);
     }
     // end
 

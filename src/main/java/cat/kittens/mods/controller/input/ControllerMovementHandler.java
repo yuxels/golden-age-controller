@@ -26,17 +26,23 @@ public class ControllerMovementHandler {
     }
 
     public void processInput(IGamepadDevice<IGamepadDeviceId> gamepad) {
+        if (MinecraftAccessor.instance().currentScreen != null)
+            return;
         movementForward = gamepad.chord().getAxisValue(ActionIds.WALK_FORWARD).orElse(0) -
                 gamepad.chord().getAxisValue(ActionIds.WALK_BACKWARD).orElse(0);
         movementLeftward = gamepad.chord().getAxisValue(ActionIds.WALK_LEFTWARD).orElse(0) -
                 gamepad.chord().getAxisValue(ActionIds.WALK_RIGHTWARD).orElse(0);
+        jumping = gamepad.chord().shouldPerform(ActionIds.JUMP);
+        sneaking = gamepad.chord().shouldPerform(ActionIds.SNEAK);
     }
 
     public void externalize() {
+        if (MinecraftAccessor.instance().currentScreen != null)
+            return;
         MinecraftAccessor.instance().player.field_161.field_2533 =
                 (float) Math.min(1, MinecraftAccessor.instance().player.field_161.field_2533 + movementForward);
         MinecraftAccessor.instance().player.field_161.field_2532 =
-                (float) Math.min(1, MinecraftAccessor.instance().player.field_161.field_2533 + movementLeftward);
+                (float) Math.min(1, MinecraftAccessor.instance().player.field_161.field_2532 + movementLeftward);
         MinecraftAccessor.instance().player.field_161.field_2536 = sneaking ||
                 MinecraftAccessor.instance().player.field_161.field_2536;
         MinecraftAccessor.instance().player.field_161.field_2535 = jumping ||
