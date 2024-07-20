@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(value = class_413.class, remap = false)
+@Mixin(class_413.class)
 public class KeyboardInputMixin {
     @Inject(method = "method_1942", at = @At(value = "TAIL"))
     void controller$tick(CallbackInfo ignored) {

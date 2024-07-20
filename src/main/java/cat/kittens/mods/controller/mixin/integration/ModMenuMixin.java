@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.function.Function;
 
-@Mixin(value = ModMenu.class, remap = false)
+@Mixin(ModMenu.class)
 public class ModMenuMixin {
     @Inject(
             method = "onInitializeClient",
@@ -21,7 +21,8 @@ public class ModMenuMixin {
                     value = "INVOKE",
                     shift = At.Shift.BEFORE
             ),
-            locals = LocalCapture.CAPTURE_FAILHARD
+            locals = LocalCapture.CAPTURE_FAILHARD,
+            remap = false
     )
     void controller$addModMenuScreen(
             CallbackInfo ci,  ImmutableMap.Builder<String, Function<Screen, ? extends Screen>> factories

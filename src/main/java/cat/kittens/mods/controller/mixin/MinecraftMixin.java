@@ -10,10 +10,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(value = Minecraft.class, remap = false)
+@Mixin(Minecraft.class)
 public abstract class MinecraftMixin {
     // Prevent LWJGL2's controller API to be initialized, since we are going to use SDL3 for this.
-    @Redirect(method = "init", at = @At(value = "INVOKE", target = "Lorg/lwjgl/input/Controllers;create()V"))
+    @Redirect(
+            method = "init",
+            at = @At(value = "INVOKE", target = "Lorg/lwjgl/input/Controllers;create()V")
+    )
     void controller$preventLWJGL2ControllerInit() {
         ControllerSupport.support().manager().tryLibInit();
     }
@@ -27,7 +30,8 @@ public abstract class MinecraftMixin {
                     target = "Ljava/lang/System;nanoTime()J",
                     ordinal = 0,
                     shift = At.Shift.AFTER
-            )
+            ),
+            remap = false
     )
     void controller$tickOffTick(CallbackInfo ignored) {
         ControllerSupport.support().manager().tick();

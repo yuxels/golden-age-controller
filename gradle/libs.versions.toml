@@ -1,7 +1,7 @@
 [versions]
 minecraft = "b1.7.3"
-fabric-loom = "1.7.2"
-babric-loom-extension = "1.7.3"
+fabric-loom = "1.6.2"
+babric-loom-extension = "1.6.9"
 babric-loader = "0.15.6-babric.2"
 mappings = "b1.7.3+0ec7dcc"
 #mappings = "b1.7.3+build.30"

@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(value = Screen.class, remap = false)
+@Mixin(Screen.class)
 public class ScreenMixin {
     @Inject(
             method = "tickInput",

@@ -22,7 +22,7 @@ base {
             append(version.toString().substringBefore('-'))
             append("-snapshot")
         }
-        append("+mc").append(libs.versions.minecraft.get())
+        append("+mc-").append(libs.versions.minecraft.get())
         if (!isReleaseBuild)
             append(if (buildId != null) "-build.${buildId}" else "-local")
     }
@@ -33,7 +33,7 @@ loom {
     mixin {
         useLegacyMixinAp = true
     }
-    customMinecraftMetadata.set("https://babric.github.io/manifest-polyfill/${libs.versions.minecraft.get()}.json")
+    customMinecraftManifest.set("https://babric.github.io/manifest-polyfill/${libs.versions.minecraft.get()}.json")
     intermediaryUrl.set("https://maven.glass-launcher.net/babric/babric/intermediary/%1\$s/intermediary-%1\$s-v2.jar")
 }
 
@@ -97,6 +97,11 @@ dependencies {
     modImplementation(libs.mod.menu) {
         isTransitive = false
     }
+}
+
+dependencies {
+    include(libs.jna)
+    include(libs.sdl4j)
 }
 
 configurations.all {

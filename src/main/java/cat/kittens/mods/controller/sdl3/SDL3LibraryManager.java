@@ -84,7 +84,7 @@ public class SDL3LibraryManager {
             throw new SDL3NativeLoadingFailException("Failed to create temporary SDL3 natives file (1).", e);
         }
         String libraryName = "libsdl4j-natives-" + ext;
-        try (InputStream in = ControllerSupport.class.getClassLoader().getResourceAsStream("sdl3-natives/" + libraryName)) {
+        try (InputStream in = ControllerSupport.class.getClassLoader().getResourceAsStream(libraryName)) {
             if (in == null)
                 throw new IOException("Failed to get built-in library: " + libraryName);
             Files.copy(in, temp);
