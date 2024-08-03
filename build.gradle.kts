@@ -9,7 +9,7 @@ plugins {
 
 base {
     group = "cat.kittens.mods"
-    archivesName = "babric-controller"
+    archivesName = "legacy-controller"
 
     // Semantic Versioning: https://semver.org/
     version = "0.1.0"
@@ -22,7 +22,7 @@ base {
             append(version.toString().substringBefore('-'))
             append("-snapshot")
         }
-        append("+mc-").append(libs.versions.minecraft.get())
+        append("+babric-").append(libs.versions.minecraft.get())
         if (!isReleaseBuild)
             append(if (buildId != null) "-build.${buildId}" else "-local")
     }

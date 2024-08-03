@@ -1,11 +1,6 @@
 package cat.kittens.mods.controller.lib;
 
-import cat.kittens.mods.controller.input.ChordHelper;
-
 import java.time.Duration;
-import java.util.HashSet;
-import java.util.OptionalDouble;
-import java.util.OptionalLong;
 
 /**
  * Controller input device.
@@ -16,8 +11,6 @@ public interface IGamepadDevice<I extends IGamepadDeviceId> {
     Input input();
 
     Type gamepadType();
-
-    ChordHelper chord();
 
     enum Type {
         STANDARD,
@@ -30,7 +23,6 @@ public interface IGamepadDevice<I extends IGamepadDeviceId> {
         NS_JOYCON_LEFT,
         NS_JOYCON_RIGHT,
         NS_JOYCON_PAIR,
-        MAX,
         UNKNOWN
     }
 
@@ -79,7 +71,7 @@ public interface IGamepadDevice<I extends IGamepadDeviceId> {
 
         void clear();
 
-        OptionalLong getPressDuration(Button button);
+        DoubleStateOutput<Boolean> getPressState(Button button);
 
         void setButtonState(Button button, boolean pressed);
 
@@ -87,81 +79,10 @@ public interface IGamepadDevice<I extends IGamepadDeviceId> {
 
         void setDeadZone(Axis axis, float value);
 
-        OptionalDouble getAxisValue(Axis axis);
+        DoubleStateOutput<Float> getAxisValue(Axis axis);
 
         void setAxisValue(Axis axis, float value);
 
         void rumble(short lowFreq, short highFreq, Duration duration);
     }
-
-    public static boolean isDummy(IGamepadDevice<IGamepadDeviceId> gamepad) {
-        return gamepad.id().name() == DUMMY.id().name();
-    }
-
-    IGamepadDevice<IGamepadDeviceId> DUMMY = new IGamepadDevice<>() {
-        @Override
-        public IGamepadDeviceId id() {
-            return new IGamepadDeviceId() {
-                @Override
-                public ControllerLocation location() {
-                    return new ControllerLocation("Dummy", (short)0, (short)0, 0);
-                }
-
-                @Override
-                public String name() {
-                    return "Dummy";
-                }
-            };
-        }
-
-        @Override
-        public ChordHelper chord() {
-            return new ChordHelper(this, new HashSet<>());
-        }
-
-        @Override
-        public Input input() {
-            return new Input() {
-                @Override
-                public void clear() {
-                }
-
-                @Override
-                public OptionalLong getPressDuration(Button button) {
-                    return OptionalLong.empty();
-                }
-
-                @Override
-                public void setButtonState(Button button, boolean pressed) {
-                }
-
-                @Override
-                public float getDeadZone(Axis axis) {
-                    return 1.f;
-                }
-
-                @Override
-                public void setDeadZone(Axis axis, float value) {
-                }
-
-                @Override
-                public OptionalDouble getAxisValue(Axis axis) {
-                    return OptionalDouble.empty();
-                }
-
-                @Override
-                public void setAxisValue(Axis axis, float value) {
-                }
-
-                @Override
-                public void rumble(short lowFreq, short highFreq, Duration duration) {
-                }
-            };
-        }
-
-        @Override
-        public Type gamepadType() {
-            return Type.UNKNOWN;
-        }
-    };
 }

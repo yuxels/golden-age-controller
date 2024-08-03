@@ -1,11 +1,12 @@
 package cat.kittens.mods.controller.lib;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class GenericGamepadDeviceInputImpl implements IGamepadDevice.Input {
-    protected Map<Button, Long> faces;
-    protected Map<IGamepadDevice.Input.Axis, Float> axes;
+    protected Map<Button, DoubleStateOutput<Boolean>> faces;
+    protected Map<IGamepadDevice.Input.Axis, DoubleStateOutput<Float>> axes;
     protected Map<IGamepadDevice.Input.Axis, Float> deadZones;
 
     public GenericGamepadDeviceInputImpl() {
@@ -15,20 +16,13 @@ public class GenericGamepadDeviceInputImpl implements IGamepadDevice.Input {
     }
 
     @Override
-    public OptionalLong getPressDuration(Button button) {
-        Long value = faces.get(button);
-        if (value == null)
-            return OptionalLong.empty();
-        return OptionalLong.of(System.currentTimeMillis() - value);
+    public DoubleStateOutput<Boolean> getPressState(Button button) {
+        return faces.computeIfAbsent(button, (btn) -> new DoubleStateOutput<>());
     }
 
     @Override
     public void setButtonState(Button button, boolean pressed) {
-        if (pressed) {
-            if (!faces.containsKey(button)) faces.put(button, System.currentTimeMillis());
-        } else {
-            faces.remove(button);
-        }
+        getPressState(button).set(pressed);
     }
 
     @Override
@@ -42,17 +36,13 @@ public class GenericGamepadDeviceInputImpl implements IGamepadDevice.Input {
     }
 
     @Override
-    public OptionalDouble getAxisValue(Axis axis) {
-        Float value = axes.get(axis);
-        return value != null ? OptionalDouble.of(value) : OptionalDouble.empty();
+    public DoubleStateOutput<Float> getAxisValue(Axis axis) {
+        return axes.computeIfAbsent(axis, (ax) -> new DoubleStateOutput<>());
     }
 
     @Override
     public void setAxisValue(Axis axis, float value) {
-        if (value > getDeadZone(axis))
-            axes.put(axis,value);
-        else
-            axes.remove(axis);
+        getAxisValue(axis).set(value > getDeadZone(axis) ? value : 0);
     }
 
     @Override

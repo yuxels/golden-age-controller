@@ -20,20 +20,11 @@ public interface MinecraftAccessor {
     @Accessor("field_2798")
     void setLastInteraction(int ticks);
 
-    @Invoker("method_2110")
-    void holdInteract(int type, boolean active);
-
     @Accessor("ticksPlayed")
     int currentTicks();
 
     @Accessor("timer")
     Timer timer();
-
-    @Accessor("field_2778")
-    boolean mouseGrabbed();
-
-    @Accessor("field_2778")
-    void setMouseGrabbed(boolean mouseGrabbed);
 
     @Accessor("INSTANCE")
     static Minecraft instance() {

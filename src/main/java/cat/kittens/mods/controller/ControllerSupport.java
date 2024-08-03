@@ -1,10 +1,10 @@
 package cat.kittens.mods.controller;
 
 import cat.kittens.mods.controller.config.ControllerModConfig;
-import cat.kittens.mods.controller.input.ControllerAimingHandler;
+import cat.kittens.mods.controller.input.ControllerInputProcessingThread;
+import cat.kittens.mods.controller.input.ControllerMappingView;
+import cat.kittens.mods.controller.input.ControllerMappingViewImpl;
 import cat.kittens.mods.controller.input.ControllerMovementHandler;
-import cat.kittens.mods.controller.input.DefaultControllerMapping;
-import cat.kittens.mods.controller.input.IControllerMapping;
 import cat.kittens.mods.controller.lib.IGamepadDevice;
 import cat.kittens.mods.controller.lib.IGamepadDeviceId;
 import cat.kittens.mods.controller.lib.IGamepadManager;
@@ -18,15 +18,16 @@ public class ControllerSupport implements ClientModInitializer {
     private static ControllerSupport instance;
 
     private boolean isLastInputController;
-    private ControllerAimingHandler aimingHandler;
+    private ControllerInputProcessingThread inputProcessing;
     private ControllerMovementHandler movementHandler;
+    private ControllerMappingView mappingView;
 
-    public IControllerMapping mapping() {
-        return DefaultControllerMapping.mapping();
+    public ControllerMappingView mapping() {
+        return mappingView == null ? (mappingView = new ControllerMappingViewImpl()) : mappingView;
     }
 
-    public ControllerAimingHandler aiming() {
-        return aimingHandler;
+    public ControllerInputProcessingThread inputProcessing() {
+        return inputProcessing;
     }
 
     public ControllerMovementHandler movement() {
@@ -57,7 +58,9 @@ public class ControllerSupport implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         instance = this;
-        aimingHandler = new ControllerAimingHandler();
+        manager().tryLibInit();
+        inputProcessing = new ControllerInputProcessingThread();
         movementHandler = new ControllerMovementHandler();
+        inputProcessing.start();
     }
 }

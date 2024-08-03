@@ -1,29 +1,25 @@
 package cat.kittens.mods.controller.mixin;
 
 import cat.kittens.mods.controller.ControllerSupport;
-import cat.kittens.mods.controller.input.ActionIds;
-import cat.kittens.mods.controller.mixin.accessor.MinecraftAccessor;
+import cat.kittens.mods.controller.input.MappingActions;
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.Screen;
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Minecraft.class)
 public abstract class MinecraftMixin {
-    @Shadow public Screen currentScreen;
-
     // Prevent LWJGL2's controller API to be initialized, since we are going to use SDL3 for this.
     @Redirect(
             method = "init",
             at = @At(value = "INVOKE", target = "Lorg/lwjgl/input/Controllers;create()V")
     )
     void controller$preventLWJGL2ControllerInit() {
-        ControllerSupport.support().manager().tryLibInit();
     }
     // end
 
@@ -32,70 +28,26 @@ public abstract class MinecraftMixin {
             method = "run",
             at = @At(
                     value = "INVOKE",
-                    target = "Ljava/lang/System;nanoTime()J",
-                    ordinal = 0,
-                    shift = At.Shift.AFTER
-            ),
-            remap = false
+                    target = "Lnet/minecraft/class_555;method_1844(F)V"
+            )
     )
-    void controller$tickOffTick(CallbackInfo ignored) {
-        ControllerSupport.support().manager().tick();
-        ControllerSupport.support().manager().currentController().ifPresent(controller -> {
-            if (controller.chord().performAllOffTick(ControllerSupport.support().mapping())) {
-                ControllerSupport.support().setCurrentInputMethod(true);
-            }
-        });
-        ControllerSupport.support().aiming().tick();
-    }
-
-    @ModifyArg(
-            method = "tick",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/client/Minecraft;method_2110(IZ)V"
-            ),
-            index = 1
-    )
-    boolean controller$tick(boolean bl) {
-        if (bl || currentScreen != null || !ControllerSupport.support().isCurrentInputMethodController())
-            return bl;
-        var controller = ControllerSupport.support().manager().currentController().orElse(null);
-        if (controller == null)
-            return false;
-        MinecraftAccessor mc = (MinecraftAccessor) this;
-        if (mc.lastInteraction() > mc.currentTicks()) {
-            mc.setLastInteraction(mc.currentTicks());
-        }
-        if (controller.chord().performAll(ControllerSupport.support().mapping())) {
-            ControllerSupport.support().setCurrentInputMethod(true);
-        }
-        return controller.chord().shouldPerform(ActionIds.BREAK);
+    void controller$tick(CallbackInfo callback) {
+        ControllerSupport.support().inputProcessing().tickMappings();
     }
     // end
 
-    // Bring back keyboard & mouse input method.
+    // Bring back keyboard input method.
     @Inject(
             method = "tick",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/entity/player/ClientPlayerEntity;method_136(IZ)V",
-                    shift = At.Shift.BEFORE
+                    shift = At.Shift.AFTER
             )
     )
     void controller$keyboard$setCurrentInputMethod(CallbackInfo ci) {
-        ControllerSupport.support().setCurrentInputMethod(false);
-    }
-
-    @Inject(
-            method = "tick",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/client/Minecraft;method_2107(I)V",
-                    shift = At.Shift.BEFORE
-            )
-    )
-    void controller$mouse$setCurrentInputMethod(CallbackInfo ci) {
-        ControllerSupport.support().setCurrentInputMethod(false);
+        if (Keyboard.getEventKeyState())
+            ControllerSupport.support().setCurrentInputMethod(false);
     }
 
     @Inject(
@@ -106,8 +58,85 @@ public abstract class MinecraftMixin {
                     shift = At.Shift.BEFORE
             )
     )
-    void controller$mouse$setCurrentInputMethod2(CallbackInfo ci) {
-        ControllerSupport.support().setCurrentInputMethod(false);
+    void controller$mouse$setCurrentInputMethod$2(CallbackInfo ci) {
+        if (Mouse.getEventButtonState())
+            ControllerSupport.support().setCurrentInputMethod(false);
+    }
+    // end
+
+    // Inject internal controller mapping logic.
+    @ModifyExpressionValue(
+            method = "tick",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lorg/lwjgl/input/Mouse;isButtonDown(I)Z",
+                    ordinal = 0
+            )
+    )
+    boolean controller$injectControllerBreak(boolean original) {
+        if (original || !ControllerSupport.support().isCurrentInputMethodController()) {
+            ControllerSupport.support().setCurrentInputMethod(false);
+            return original;
+        }
+        var controller = ControllerSupport.support().manager().currentController().orElse(null);
+        if (controller == null)
+            return false;
+        return ControllerSupport.support().mapping().find(MappingActions.BREAK)
+                .flatMap(m -> m.getContextFor(controller))
+                .isPresent();
+    }
+
+    @ModifyExpressionValue(
+            method = "tick",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lorg/lwjgl/input/Mouse;isButtonDown(I)Z",
+                    ordinal = 2
+            )
+    )
+    boolean controller$injectControllerHoldBreak(boolean original) {
+        if (original || !ControllerSupport.support().isCurrentInputMethodController()) {
+            ControllerSupport.support().setCurrentInputMethod(false);
+            return original;
+        }
+        var controller = ControllerSupport.support().manager().currentController().orElse(null);
+        if (controller == null)
+            return false;
+        return ControllerSupport.support().mapping().find(MappingActions.BREAK)
+                .flatMap(m -> m.getContextFor(controller))
+                .isPresent();
+    }
+
+    @ModifyExpressionValue(
+            method = "tick",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lorg/lwjgl/input/Mouse;isButtonDown(I)Z",
+                    ordinal = 1
+            )
+    )
+    boolean controller$injectControllerInteract(boolean original) {
+        if (original || !ControllerSupport.support().isCurrentInputMethodController()) {
+            ControllerSupport.support().setCurrentInputMethod(false);
+            return original;
+        }
+        var controller = ControllerSupport.support().manager().currentController().orElse(null);
+        if (controller == null)
+            return false;
+        return ControllerSupport.support().mapping().find(MappingActions.INTERACT)
+                .flatMap(m -> m.getContextFor(controller))
+                .isPresent();
+    }
+
+    @ModifyExpressionValue(
+            method = "tick",
+            at = @At(
+                    value = "FIELD",
+                    target = "Lnet/minecraft/client/Minecraft;field_2778:Z"
+            )
+    )
+    boolean controller$injectControllerAvailability(boolean original) {
+        return original || ControllerSupport.support().isCurrentInputMethodController();
     }
     // end
 }

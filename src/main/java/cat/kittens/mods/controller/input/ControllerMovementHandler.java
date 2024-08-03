@@ -1,8 +1,6 @@
 package cat.kittens.mods.controller.input;
 
 import cat.kittens.mods.controller.ControllerSupport;
-import cat.kittens.mods.controller.lib.IGamepadDevice;
-import cat.kittens.mods.controller.lib.IGamepadDeviceId;
 import cat.kittens.mods.controller.mixin.accessor.MinecraftAccessor;
 
 public class ControllerMovementHandler {
@@ -17,27 +15,27 @@ public class ControllerMovementHandler {
     }
 
     public void tick() {
-        if (MinecraftAccessor.instance().player == null)
+        if (MinecraftAccessor.instance().currentScreen != null || MinecraftAccessor.instance().player == null)
             return;
         ControllerSupport.support().manager().currentController().ifPresent(controller -> {
-            processInput(controller);
+            processInput();
             externalize();
         });
     }
 
-    public void processInput(IGamepadDevice<IGamepadDeviceId> gamepad) {
-        if (MinecraftAccessor.instance().currentScreen != null)
+    public void processInput() {
+        if (MinecraftAccessor.instance().currentScreen != null || MinecraftAccessor.instance().player == null)
             return;
-        movementForward = gamepad.chord().getAxisValue(ActionIds.WALK_FORWARD).orElse(0) -
-                gamepad.chord().getAxisValue(ActionIds.WALK_BACKWARD).orElse(0);
-        movementLeftward = gamepad.chord().getAxisValue(ActionIds.WALK_LEFTWARD).orElse(0) -
-                gamepad.chord().getAxisValue(ActionIds.WALK_RIGHTWARD).orElse(0);
-        jumping = gamepad.chord().shouldPerform(ActionIds.JUMP);
-        sneaking = gamepad.chord().shouldPerform(ActionIds.SNEAK);
+        movementForward = ControllerSupport.support().mapping().getCurrentValue(MappingActions.WALK_FORWARD).orElse(0) -
+                ControllerSupport.support().mapping().getCurrentValue(MappingActions.WALK_BACKWARD).orElse(0);
+        movementLeftward = ControllerSupport.support().mapping().getCurrentValue(MappingActions.WALK_LEFTWARD).orElse(0) -
+                ControllerSupport.support().mapping().getCurrentValue(MappingActions.WALK_RIGHTWARD).orElse(0);
+        jumping = ControllerSupport.support().mapping().getCurrentValue(MappingActions.JUMP).isPresent();
+        sneaking = ControllerSupport.support().mapping().getCurrentValue(MappingActions.SNEAK).isPresent();
     }
 
     public void externalize() {
-        if (MinecraftAccessor.instance().currentScreen != null)
+        if (MinecraftAccessor.instance().currentScreen != null || MinecraftAccessor.instance().player == null)
             return;
         MinecraftAccessor.instance().player.field_161.field_2533 =
                 (float) Math.min(1, MinecraftAccessor.instance().player.field_161.field_2533 + movementForward);
