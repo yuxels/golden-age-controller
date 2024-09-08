@@ -1,4 +1,8 @@
-package cat.kittens.mods.controller.lib;
+package cat.kittens.mods.controller.lib
 
-public record ControllerLocation(String controllerManagerIdentifier, short vendor, short product, int index) {
-}
+public data class ControllerLocation(
+    val controllerManagerIdentifier: String,
+    val vendor: Short,
+    val product: Short,
+    val index: Int
+)

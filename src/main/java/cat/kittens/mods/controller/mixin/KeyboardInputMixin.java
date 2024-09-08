@@ -19,6 +19,6 @@ public class KeyboardInputMixin {
             )
     )
     void controller$tick(CallbackInfo ignored) {
-        ControllerSupport.support().movement().tick();
+        ControllerSupport.INSTANCE.getMovementHandler().tick();
     }
 }

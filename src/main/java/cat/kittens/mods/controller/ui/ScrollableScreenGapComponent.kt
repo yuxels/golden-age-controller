@@ -1,37 +1,13 @@
-package cat.kittens.mods.controller.ui;
+package cat.kittens.mods.controller.ui
 
-public class ScrollableScreenGapComponent implements ScrollableScreenComponent {
-    public ScrollableScreenGapComponent() {
-    }
+public object ScrollableScreenGapComponent : ScrollableScreenComponent {
+    override var context: ComponentContext? = null
 
-    @Override
-    public void init(
-            ScrollableScreen screen, ScrollableScreenRenderContext ctx,
-            int x, int y, int x2, int y2
-    ) {
-    }
+    override fun render(mouseX: Int, mouseY: Int, delta: Float): Unit = Unit
 
-    @Override
-    public void render(int mouseX, int mouseY, float delta) {
-    }
+    override fun isMouseOver(mouseX: Int, mouseY: Int): Boolean = false
 
-    @Override
-    public boolean isMouseOver(int mouseX, int mouseY) {
-        return false;
-    }
+    override val width: Int get() = 8
 
-    @Override
-    public boolean handleClick(ScrollableScreen screen, ScrollableScreenRenderContext ctx, int x, int y, int button) {
-        return false;
-    }
-
-    @Override
-    public int width(ScrollableScreenRenderContext ctx) {
-        return 16;
-    }
-
-    @Override
-    public int height(ScrollableScreenRenderContext ctx) {
-        return 16;
-    }
+    override val height: Int get() = 8
 }

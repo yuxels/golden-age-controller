@@ -1,6 +1,7 @@
-package cat.kittens.mods.controller.lib;
+package cat.kittens.mods.controller.lib
 
-public record GenericGamepadDevice<I extends IGamepadDeviceId>(
-        I id, Type gamepadType, Input input
-) implements IGamepadDevice<I> {
-}
+public data class GenericGamepadDevice<I : IGamepadDeviceId>(
+    override val id: I,
+    override val vendor: GamepadVendorType,
+    override val input: GamepadDeviceInputView
+) : GamepadDevice<I>

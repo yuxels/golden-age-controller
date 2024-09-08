@@ -1,24 +1,26 @@
-package cat.kittens.mods.controller.util;
+package cat.kittens.mods.controller.util
 
-public class MathHelper {
-    public static float lerp(float delta, float start, float end) {
-        return start + delta * (end - start);
+public object MathHelper {
+    public fun lerp(delta: Float, start: Float, end: Float): Float {
+        return start + delta * (end - start)
     }
 
-    public static float clampedLerp(float start, float end, float delta) {
-        if (delta < 0.0F) {
-            return start;
+    public fun clampedLerp(start: Float, end: Float, delta: Float): Float {
+        return if (delta < 0.0f) {
+            start
         } else {
-            return delta > 1.0F ? end : lerp(delta, start, end);
+            if (delta > 1.0f) end else lerp(delta, start, end)
         }
     }
 
-    public static float getLerpProgress(float value, float start, float end) {
-        return (value - start) / (end - start);
+    public fun getLerpProgress(value: Float, start: Float, end: Float): Float {
+        return (value - start) / (end - start)
     }
 
-    public static float clampedLerpFromProgress(float lerpValue, float lerpStart, float lerpEnd, float start,
-                                                float end) {
-        return clampedLerp(start, end, getLerpProgress(lerpValue, lerpStart, lerpEnd));
+    public fun clampedLerpFromProgress(
+        lerpValue: Float, lerpStart: Float, lerpEnd: Float, start: Float,
+        end: Float
+    ): Float {
+        return clampedLerp(start, end, getLerpProgress(lerpValue, lerpStart, lerpEnd))
     }
 }

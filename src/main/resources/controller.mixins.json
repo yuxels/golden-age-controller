@@ -7,13 +7,12 @@
     "KeyboardInputMixin",
     "MinecraftMixin",
     "ScreenMixin",
-    "accessor.MinecraftAccessor"
+    "accessor.ButtonWidgetAccessor",
+    "accessor.MinecraftAccessor",
+    "integration.ModMenuMixin"
   ],
   "injectors": {
     "defaultRequire": 1
   },
-  "plugin": "cat.kittens.mods.controller.ControllerModMixinConfigPlugin",
-  "mixins": [
-    "integration.ModMenuMixin"
-  ]
+  "plugin": "cat.kittens.mods.controller.ControllerModMixinConfigPlugin"
 }

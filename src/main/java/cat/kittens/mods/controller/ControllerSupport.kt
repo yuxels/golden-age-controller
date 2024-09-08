@@ -1,66 +1,54 @@
-package cat.kittens.mods.controller;
+package cat.kittens.mods.controller
 
-import cat.kittens.mods.controller.config.ControllerModConfig;
-import cat.kittens.mods.controller.input.ControllerInputProcessingThread;
-import cat.kittens.mods.controller.input.ControllerMappingView;
-import cat.kittens.mods.controller.input.ControllerMappingViewImpl;
-import cat.kittens.mods.controller.input.ControllerMovementHandler;
-import cat.kittens.mods.controller.lib.IGamepadDevice;
-import cat.kittens.mods.controller.lib.IGamepadDeviceId;
-import cat.kittens.mods.controller.lib.IGamepadManager;
-import cat.kittens.mods.controller.sdl3.SDL3GamepadManager;
-import net.fabricmc.api.ClientModInitializer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import cat.kittens.mods.controller.config.ControllerModConfig
+import cat.kittens.mods.controller.input.ControllerMappingView
+import cat.kittens.mods.controller.input.ControllerMappingViewImpl
+import cat.kittens.mods.controller.input.processing.ControllerMovementHandler
+import cat.kittens.mods.controller.input.processing.inputProcessingCoroutineScope
+import cat.kittens.mods.controller.lib.GenericGamepadManager
+import cat.kittens.mods.controller.sdl3.SDL3GamepadManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import net.mine_diver.unsafeevents.listener.EventListener
+import net.modificationstation.stationapi.api.event.mod.InitEvent
+import net.modificationstation.stationapi.api.mod.entrypoint.Entrypoint
+import org.apache.logging.log4j.Logger
 
-public class ControllerSupport implements ClientModInitializer {
-    public static final Logger LOGGER = LoggerFactory.getLogger("Controller Support");
-    private static ControllerSupport instance;
+public object ControllerSupport {
+    @Entrypoint.Logger("Controller Support")
+    public lateinit var LOGGER: Logger
 
-    private boolean isLastInputController;
-    private ControllerInputProcessingThread inputProcessing;
-    private ControllerMovementHandler movementHandler;
-    private ControllerMappingView mappingView;
+    public var isControllerActive: Boolean = false
+        get() = field && manager.currentController != null
 
-    public ControllerMappingView mapping() {
-        return mappingView == null ? (mappingView = new ControllerMappingViewImpl()) : mappingView;
+    public val movementHandler: ControllerMovementHandler by lazy {
+        ControllerMovementHandler()
     }
 
-    public ControllerInputProcessingThread inputProcessing() {
-        return inputProcessing;
+    public val mappingView: ControllerMappingView by lazy {
+        ControllerMappingViewImpl()
     }
 
-    public ControllerMovementHandler movement() {
-        return movementHandler;
+    public val manager: GenericGamepadManager by lazy {
+        SDL3GamepadManager() as GenericGamepadManager
     }
 
-    public ControllerModConfig config() {
-        return ControllerModConfig.DEFAULT;
+    public val coroutineScope: CoroutineScope by lazy {
+        CoroutineScope(SupervisorJob() + Dispatchers.Default)
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public IGamepadManager<Exception, IGamepadDevice<IGamepadDeviceId>, IGamepadDeviceId> manager() {
-        return (IGamepadManager) SDL3GamepadManager.manager();
-    }
+    public var config: ControllerModConfig = ControllerModConfig.DEFAULT
 
-    public boolean isCurrentInputMethodController() {
-        return manager().currentController().isPresent() && isLastInputController;
-    }
-
-    public void setCurrentInputMethod(boolean isController) {
-        isLastInputController = manager().currentController().isPresent() && isController;
-    }
-
-    public static ControllerSupport support() {
-        return instance;
-    }
-
-    @Override
-    public void onInitializeClient() {
-        instance = this;
-        manager().tryLibInit();
-        inputProcessing = new ControllerInputProcessingThread();
-        movementHandler = new ControllerMovementHandler();
-        inputProcessing.start();
+    @EventListener(phase = InitEvent.POST_INIT_PHASE)
+    private fun init(ignored: InitEvent) {
+        manager.tryLibInit()
+        coroutineScope.launch {
+            inputProcessingCoroutineScope().join()
+        }
     }
 }
+
+public inline val logger: Logger
+    get() = ControllerSupport.LOGGER

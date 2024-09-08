@@ -1,57 +1,40 @@
-package cat.kittens.mods.controller.lib;
+package cat.kittens.mods.controller.lib
 
-import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
+import java.time.Duration
+import java.util.*
 
-public class GenericGamepadDeviceInputImpl implements IGamepadDevice.Input {
-    protected Map<Button, DoubleStateOutput<Boolean>> faces;
-    protected Map<IGamepadDevice.Input.Axis, DoubleStateOutput<Float>> axes;
-    protected Map<IGamepadDevice.Input.Axis, Float> deadZones;
+public open class GenericGamepadDeviceInputImpl : GamepadDeviceInputView {
+    protected var faces: MutableMap<GamepadButtonKind, DoubleStateOutput<Boolean>> =
+        EnumMap(GamepadButtonKind::class.java)
+    protected var axes: MutableMap<GamepadAxisKind, DoubleStateOutput<Float>> =
+        EnumMap(GamepadAxisKind::class.java)
+    protected var deadZones: MutableMap<GamepadAxisKind, Float> =
+        EnumMap(GamepadAxisKind::class.java)
 
-    public GenericGamepadDeviceInputImpl() {
-        this.faces = new HashMap<>();
-        this.axes = new HashMap<>();
-        this.deadZones = new HashMap<>();
+    override fun buttonState(button: GamepadButtonKind): DoubleStateOutput<Boolean> {
+        return faces.computeIfAbsent(button) { DoubleStateOutput() }
     }
 
-    @Override
-    public DoubleStateOutput<Boolean> getPressState(Button button) {
-        return faces.computeIfAbsent(button, (btn) -> new DoubleStateOutput<>());
+    override fun buttonState(button: GamepadButtonKind, active: Boolean) {
+        get(button).set(active)
     }
 
-    @Override
-    public void setButtonState(Button button, boolean pressed) {
-        getPressState(button).set(pressed);
+    override fun deadZone(axis: GamepadAxisKind): Float {
+        return deadZones.getOrDefault(axis, 0.25f)
     }
 
-    @Override
-    public float getDeadZone(Axis axis) {
-        return deadZones.getOrDefault(axis, 0.25f);
+    override fun deadZone(axis: GamepadAxisKind, value: Float) {
+        deadZones[axis] = value
     }
 
-    @Override
-    public void setDeadZone(Axis axis, float value) {
-        deadZones.put(axis, value);
+    override fun axisState(axis: GamepadAxisKind): DoubleStateOutput<Float> {
+        return axes.computeIfAbsent(axis) { DoubleStateOutput() }
     }
 
-    @Override
-    public DoubleStateOutput<Float> getAxisValue(Axis axis) {
-        return axes.computeIfAbsent(axis, (ax) -> new DoubleStateOutput<>());
+    override fun axisState(axis: GamepadAxisKind, value: Float) {
+        get(axis).set(if (value > deadZone(axis)) value else 0f)
     }
 
-    @Override
-    public void setAxisValue(Axis axis, float value) {
-        getAxisValue(axis).set(value > getDeadZone(axis) ? value : 0);
-    }
-
-    @Override
-    public void clear() {
-        axes.clear();
-        faces.clear();
-    }
-
-    @Override
-    public void rumble(short lowFreq, short highFreq, Duration duration) {
+    override fun rumble(lowFreq: Short, highFreq: Short, duration: Duration) {
     }
 }

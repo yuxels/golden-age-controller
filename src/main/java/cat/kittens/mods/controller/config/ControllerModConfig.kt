@@ -1,8 +1,11 @@
-package cat.kittens.mods.controller.config;
+package cat.kittens.mods.controller.config
 
-public record ControllerModConfig(float rightStickXSensitivity, float rightStickYSensitivity) {
-    public static final float SENS_MULTIPLIER = .00075f;
+public data class ControllerModConfig(var rightStickXSensitivity: Float, var rightStickYSensitivity: Float) {
+    public companion object {
+        public const val SENS_MULTIPLIER: Float = .000075f
 
-    public static final ControllerModConfig DEFAULT = new ControllerModConfig(
-            10 * SENS_MULTIPLIER, 10 * SENS_MULTIPLIER);
+        public val DEFAULT: ControllerModConfig = ControllerModConfig(
+            10 * SENS_MULTIPLIER, 10 * SENS_MULTIPLIER
+        )
+    }
 }

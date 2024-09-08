@@ -1,69 +1,56 @@
-package cat.kittens.mods.controller.input;
+package cat.kittens.mods.controller.input
 
-import cat.kittens.mods.controller.lib.IGamepadDevice;
-import com.google.common.collect.ImmutableSet;
+import cat.kittens.mods.controller.lib.GamepadAxisKind
+import cat.kittens.mods.controller.lib.GamepadButtonKind
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
+public class ControllerMappingViewImpl(mappings: Set<ControllerMapping> = defaultSet()) : ControllerMappingView {
+    private val _mappings = mappings.associateBy { it.action.id }.toMutableMap()
 
-public class ControllerMappingViewImpl implements ControllerMappingView {
-    private final Map<MappingAction.Id, ControllerMapping> mappings;
+    override val mappings: Set<ControllerMapping>
+        get() = _mappings.values.toSet()
 
-    public ControllerMappingViewImpl(Set<ControllerMapping> mappings) {
-        this.mappings = mappings != null ? toMap(mappings) : toMap(defaultSet());
+    override fun overrideMapping(id: MappingAction.Id, supplier: (prev: ControllerMapping?) -> ControllerMapping) {
+        _mappings.compute(id) { _, v -> supplier(v) }
     }
 
-    public ControllerMappingViewImpl() {
-        this(null);
+    override fun get(id: MappingAction.Id): ControllerMapping? {
+        return _mappings[id]
     }
 
-    private static Set<ControllerMapping> defaultSet() {
-        return Set.of(
-                ControllerMapping.create(MappingActions.BREAK, IGamepadDevice.Input.Axis.RIGHT_TRIGGER),
-                ControllerMapping.create(MappingActions.INTERACT, IGamepadDevice.Input.Axis.LEFT_TRIGGER),
-                ControllerMapping.create(MappingActions.PICK_BLOCK, IGamepadDevice.Input.Button.DPAD_LEFT),
-                ControllerMapping.create(MappingActions.JUMP, IGamepadDevice.Input.Button.SOUTH),
-                ControllerMapping.create(MappingActions.OPEN_INVENTORY, IGamepadDevice.Input.Button.NORTH),
-                ControllerMapping.create(MappingActions.DROP_ITEM, IGamepadDevice.Input.Button.EAST),
-                ControllerMapping.create(MappingActions.SNEAK, IGamepadDevice.Input.Button.WEST),
-                ControllerMapping.create(MappingActions.OPEN_CHAT, IGamepadDevice.Input.Button.DPAD_RIGHT),
-                ControllerMapping.create(MappingActions.WALK_FORWARD, IGamepadDevice.Input.Axis.LEFT_STICK_UP),
-                ControllerMapping.create(MappingActions.WALK_BACKWARD, IGamepadDevice.Input.Axis.LEFT_STICK_DOWN),
-                ControllerMapping.create(MappingActions.WALK_LEFTWARD, IGamepadDevice.Input.Axis.LEFT_STICK_LEFT),
-                ControllerMapping.create(MappingActions.WALK_RIGHTWARD, IGamepadDevice.Input.Axis.LEFT_STICK_RIGHT),
-                ControllerMapping.create(MappingActions.AIM_UP, IGamepadDevice.Input.Axis.RIGHT_STICK_UP),
-                ControllerMapping.create(MappingActions.AIM_DOWN, IGamepadDevice.Input.Axis.RIGHT_STICK_DOWN),
-                ControllerMapping.create(MappingActions.AIM_LEFT, IGamepadDevice.Input.Axis.RIGHT_STICK_LEFT),
-                ControllerMapping.create(MappingActions.AIM_RIGHT, IGamepadDevice.Input.Axis.RIGHT_STICK_RIGHT),
-                ControllerMapping.create(MappingActions.BACK_TO_GAME, IGamepadDevice.Input.Button.WEST)
-        );
-    }
-
-    private static Map<MappingAction.Id, ControllerMapping> toMap(Set<ControllerMapping> set) {
-        var buf = new HashMap<MappingAction.Id, ControllerMapping>();
-        for (var value : set) {
-            if (MappingActions.getById(value.action().id()).isEmpty())
-                throw new RuntimeException("Cannot convert a non-registered mapping.");
-            buf.put(value.action().id(), value);
-        }
-        return buf;
-    }
-
-    @Override
-    public ImmutableSet<ControllerMapping> mappings() {
-        return ImmutableSet.copyOf(mappings.values());
-    }
-
-    @Override
-    public void overrideMapping(MappingAction.Id id, Function<Optional<ControllerMapping>, ControllerMapping> supplier) {
-        mappings.compute(id, (k, v) -> supplier.apply(Optional.ofNullable(v)));
-    }
-
-    @Override
-    public Optional<ControllerMapping> find(MappingAction.Id id) {
-        return Optional.ofNullable(mappings.get(id));
+    private companion object {
+        private fun defaultSet(): Set<ControllerMapping> = setOf(
+            ControllerMapping(MappingActions.BREAK, GamepadAxisKind.RightTrigger),
+            ControllerMapping(MappingActions.INTERACT, GamepadAxisKind.LeftTrigger),
+            ControllerMapping(MappingActions.PICK_BLOCK, GamepadButtonKind.DirectionalLeft),
+            ControllerMapping(MappingActions.JUMP, GamepadButtonKind.South),
+            ControllerMapping(MappingActions.OPEN_INVENTORY, GamepadButtonKind.North),
+            ControllerMapping(MappingActions.DROP_ITEM, GamepadButtonKind.East),
+            ControllerMapping(MappingActions.SNEAK, GamepadButtonKind.West),
+            ControllerMapping(MappingActions.OPEN_CHAT, GamepadButtonKind.DirectionalRight),
+            ControllerMapping(
+                MappingActions.WALK_FORWARD,
+                GamepadAxisKind.LeftStickUp
+            ),
+            ControllerMapping(
+                MappingActions.WALK_BACKWARD,
+                GamepadAxisKind.LeftStickDown
+            ),
+            ControllerMapping(
+                MappingActions.WALK_LEFTWARD,
+                GamepadAxisKind.LeftStickLeft
+            ),
+            ControllerMapping(
+                MappingActions.WALK_RIGHTWARD,
+                GamepadAxisKind.LeftStickRight
+            ),
+            ControllerMapping(MappingActions.AIM_UP, GamepadAxisKind.RightStickUp),
+            ControllerMapping(MappingActions.AIM_DOWN, GamepadAxisKind.RightStickDown),
+            ControllerMapping(MappingActions.AIM_LEFT, GamepadAxisKind.RightStickLeft),
+            ControllerMapping(
+                MappingActions.AIM_RIGHT,
+                GamepadAxisKind.RightStickRight
+            ),
+            ControllerMapping(MappingActions.BACK_TO_GAME, GamepadButtonKind.East)
+        )
     }
 }

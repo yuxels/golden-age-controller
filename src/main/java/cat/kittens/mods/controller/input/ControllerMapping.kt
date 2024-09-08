@@ -1,97 +1,80 @@
-package cat.kittens.mods.controller.input;
+package cat.kittens.mods.controller.input
 
-import cat.kittens.mods.controller.lib.IGamepadDevice;
-import cat.kittens.mods.controller.lib.IGamepadDeviceId;
-import com.google.common.collect.ImmutableList;
-
-import java.util.Optional;
-import java.util.function.Function;
+import cat.kittens.mods.controller.lib.GamepadAxisKind
+import cat.kittens.mods.controller.lib.GamepadButtonKind
+import cat.kittens.mods.controller.lib.GenericGamepadDeviceType
+import cat.kittens.mods.controller.lib.get
 
 public interface ControllerMapping {
-    static ControllerMapping create(
-            MappingAction action,
-            IGamepadDevice.Input.Button... buttons
-    ) {
-        return create(action, ImmutableList.copyOf(buttons), ImmutableList.of());
+    public val action: MappingAction
+
+    public fun getContextFor(gamepad: GenericGamepadDeviceType): MappingExecutionContext?
+
+    public fun withContextSupplier(
+        supplier: (device: GenericGamepadDeviceType) -> MappingExecutionContext?
+    ): ControllerMapping {
+        val outer = this
+        return object : ControllerMapping {
+            override val action: MappingAction
+                get() = outer.action
+
+            override fun getContextFor(gamepad: GenericGamepadDeviceType): MappingExecutionContext? {
+                return supplier(gamepad)
+            }
+        }
     }
 
-    static ControllerMapping create(
-            MappingAction action,
-            IGamepadDevice.Input.Axis... axes
-    ) {
-        return create(action, ImmutableList.of(), ImmutableList.copyOf(axes));
-    }
+    public companion object {
+        @JvmName("create")
+        public operator fun invoke(
+            action: MappingAction,
+            vararg buttons: GamepadButtonKind
+        ): ControllerMapping {
+            return invoke(action, buttons.toList(), emptyList())
+        }
 
-    static Function<IGamepadDevice<IGamepadDeviceId>, Optional<MappingExecutionContext>> createContextSupplier(
-            ImmutableList<IGamepadDevice.Input.Button> buttons,
-            ImmutableList<IGamepadDevice.Input.Axis> axes
-    ) {
-        return (gamepad) -> {
-            if (buttons.isEmpty() && axes.isEmpty())
-                return Optional.empty();
-            boolean buttonChordActive = buttons.stream()
-                    .allMatch(x -> gamepad.input().getPressState(x).current().orElse(false));
-            boolean axisChordActive = axes.stream()
-                    .allMatch(x -> gamepad.input().getAxisValue(x).current().orElse(Float.MIN_VALUE) > 0);
+        @JvmName("create")
+        public operator fun invoke(
+            action: MappingAction,
+            vararg axes: GamepadAxisKind
+        ): ControllerMapping {
+            return invoke(action, emptyList(), axes.toList())
+        }
+
+        public fun createContextSupplier(
+            buttons: List<GamepadButtonKind>,
+            axes: List<GamepadAxisKind>
+        ): (GenericGamepadDeviceType) -> MappingExecutionContext? = block@{ gamepad ->
+            if (buttons.isEmpty() && axes.isEmpty()) return@block null
+            val buttonChordActive = buttons.all { gamepad.input[it].current ?: false }
+            val axisChordActive = axes.all { (gamepad.input[it].current ?: Float.MIN_VALUE) > 0f }
             if (buttonChordActive && axisChordActive) {
-                var held = true;
-                var value = 1.0;
-                for (var button : buttons) {
-                    var v = gamepad.input().getPressState(button);
-                    if (!v.previous().orElse(false))
-                        held = false;
+                var held = !buttons.any { gamepad.input[it].previous != true }
+                var value = 1.0
+                for (axis in axes) {
+                    val v = gamepad.input[axis]
+                    if ((v.previous ?: 0f) <= 0f) held = false
+                    val curr = gamepad.input[axis].current ?: 1f
+                    if (curr > value) value = curr.toDouble()
                 }
-                for (var axis : axes) {
-                    var v = gamepad.input().getAxisValue(axis);
-                    if (v.previous().orElse(0f) == 0f)
-                        held = false;
-                    var curr = gamepad.input().getAxisValue(axis).current().orElse(1f);
-                    if (value > curr)
-                        value = curr;
-                }
-                return Optional.of(new MappingExecutionContext(value, held));
+                return@block MappingExecutionContext(value, held)
             }
-            return Optional.empty();
-        };
-    }
+            null
+        }
 
-    static ControllerMapping create(
-            MappingAction action,
-            ImmutableList<IGamepadDevice.Input.Button> buttons,
-            ImmutableList<IGamepadDevice.Input.Axis> axes
-    ) {
-        var supplier = createContextSupplier(buttons, axes);
-        return new ControllerMapping() {
-            @Override
-            public MappingAction action() {
-                return action;
+        @JvmName("create")
+        public operator fun invoke(
+            action: MappingAction,
+            buttons: List<GamepadButtonKind>,
+            axes: List<GamepadAxisKind>
+        ): ControllerMapping {
+            val supplier = createContextSupplier(buttons, axes)
+            return object : ControllerMapping {
+                override val action: MappingAction = action
+
+                override fun getContextFor(gamepad: GenericGamepadDeviceType): MappingExecutionContext? =
+                    supplier(gamepad)
             }
-
-            @Override
-            public Optional<MappingExecutionContext> getContextFor(IGamepadDevice<IGamepadDeviceId> gamepad) {
-                return supplier.apply(gamepad);
-            }
-        };
-    }
-
-    MappingAction action();
-
-    Optional<MappingExecutionContext> getContextFor(IGamepadDevice<IGamepadDeviceId> gamepad);
-
-    default ControllerMapping withContextSupplier(
-            Function<IGamepadDevice<IGamepadDeviceId>, Optional<MappingExecutionContext>> supplier
-    ) {
-        var outer = this;
-        return new ControllerMapping() {
-            @Override
-            public MappingAction action() {
-                return outer.action();
-            }
-
-            @Override
-            public Optional<MappingExecutionContext> getContextFor(IGamepadDevice<IGamepadDeviceId> gamepad) {
-                return supplier.apply(gamepad);
-            }
-        };
+        }
     }
 }

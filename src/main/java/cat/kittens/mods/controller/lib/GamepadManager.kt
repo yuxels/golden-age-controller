@@ -1,59 +1,56 @@
-package cat.kittens.mods.controller.lib;
+package cat.kittens.mods.controller.lib
 
-import java.util.List;
-import java.util.Optional;
+public typealias GenericGamepadManager = GamepadManager<Exception, GamepadDevice<IGamepadDeviceId>, IGamepadDeviceId>
 
-public interface IGamepadManager<E extends Throwable, C extends IGamepadDevice<I>, I extends IGamepadDeviceId> {
-    Optional<C> currentController();
+public interface GamepadManager<E : Throwable, C : GamepadDevice<I>, I : IGamepadDeviceId> {
+    public var currentController: C?
 
-    void setCurrentController(C controller);
+    public val identifier: String
 
-    String identifier();
-
-    boolean isInitialized();
+    public val isInitialized: Boolean
 
     /**
      * Initializes all the libraries required to interact with Input APIs.
      * @return An error resulting from the operation, null if none.
      */
-    Optional<E> tryLibInit();
+    public fun tryLibInit(): Result<Unit>
 
     /**
      * Rediscovers all connected controllers.
      */
-    void discoverAll();
+    public fun discoverAll(): Result<Unit>
 
     /**
      * @param id The unique identification of the target device.
      * @return Whether the device that goes by the given id is a gamepad device.
      */
-    boolean isGamepad(I id);
+    public fun hasGamepad(id: I): Result<Boolean>
 
     /**
      * @param id The unique identification of the target device.
      * @return Whether the device that goes by the given id is a gamepad device.
      */
-    boolean isGamepad(String id);
+    public fun hasGamepad(id: String): Result<Boolean>
 
     /**
      * @param id The unique identification of the target device.
      * @return Empty optional if not found, gamepad entity otherwise.
      */
-    Optional<C> findGamepad(String id);
+    public fun findGamepadOrNull(id: String): Result<C?>
 
     /**
      * @param id The unique identification of the target device.
      * @return Empty optional if not found, gamepad entity otherwise.
      */
-    Optional<C> findGamepad(I id);
+    public fun findGamepadOrNull(id: I): Result<C?>
 
     /**
      * Get all available gamepads.
      */
-    List<C> findAllGamepads();
+    public fun findAllGamepads(): Result<List<C>>
 
     /**
      * Runs the required logic on this tick.
      */
-    void tick();
+    public fun tick()
 }

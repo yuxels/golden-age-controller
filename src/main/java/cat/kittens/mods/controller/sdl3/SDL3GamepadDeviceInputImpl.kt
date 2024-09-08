@@ -1,21 +1,11 @@
-package cat.kittens.mods.controller.sdl3;
+package cat.kittens.mods.controller.sdl3
 
-import cat.kittens.mods.controller.lib.GenericGamepadDeviceInputImpl;
+import cat.kittens.mods.controller.lib.GenericGamepadDeviceInputImpl
+import dev.isxander.sdl3java.api.gamepad.SdlGamepad
+import java.time.Duration
 
-import java.time.Duration;
-
-import static dev.isxander.sdl3java.api.gamepad.SdlGamepad.SDL_RumbleGamepad;
-
-public class SDL3GamepadDeviceInputImpl extends GenericGamepadDeviceInputImpl {
-    private final SDL3GamepadDeviceId id;
-
-    public SDL3GamepadDeviceInputImpl(SDL3GamepadDeviceId id) {
-        super();
-        this.id = id;
-    }
-
-    @Override
-    public void rumble(short lowFreq, short highFreq, Duration duration) {
-        SDL_RumbleGamepad(id.handle, lowFreq, highFreq, (int) duration.toMillis());
+public class SDL3GamepadDeviceInputImpl(private val id: SDL3GamepadDeviceId) : GenericGamepadDeviceInputImpl() {
+    override fun rumble(lowFreq: Short, highFreq: Short, duration: Duration) {
+        SdlGamepad.SDL_RumbleGamepad(id.handle, lowFreq, highFreq, duration.toMillis().toInt())
     }
 }

@@ -1,88 +1,83 @@
-package cat.kittens.mods.controller.ui;
+package cat.kittens.mods.controller.ui
 
-import net.minecraft.client.render.Tessellator;
-import org.lwjgl.opengl.GL11;
+import net.minecraft.client.render.Tessellator
+import org.lwjgl.opengl.GL11
+import kotlin.math.ceil
+import kotlin.math.max
+import kotlin.math.min
 
-public class ScrollBarWidget {
-    private final int x;
-    private final int y;
-    private final int width;
-    private final int height;
-    private final int pageHeight;
-    private float targetScrollPercent;
-    private float scrollPercent;
-    private final int top;
-    private final boolean render;
+public data class ScrollBarWidget(
+    private val x: Int,
+    private val y: Int,
+    private val width: Int,
+    private val height: Int,
+    private val pageHeight: Int,
+    private val top: Int
+) {
+    private var targetScrollPercent = 0f
+    private var scrollPercent = 0f
 
-    private static final float SMOOTH_SCROLLING_FACTOR = 0.1f;
+    public var shouldRender: () -> Boolean = { pageHeight > height }
 
-    public ScrollBarWidget(int x, int y, int width, int height, int pageHeight, int top) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
-        this.pageHeight = pageHeight;
-        this.scrollPercent = 0;
-        this.targetScrollPercent = 0;
-        this.top = top;
-        this.render = pageHeight > height;
+    private fun drawRectangle(t: Tessellator, x: Int, y: Int, width: Int, height: Int) {
+        t.vertex(x.toDouble(), y.toDouble(), 0.0)
+        t.vertex(x.toDouble(), (y + height).toDouble(), 0.0)
+        t.vertex((x + width).toDouble(), (y + height).toDouble(), 0.0)
+        t.vertex((x + width).toDouble(), y.toDouble(), 0.0)
     }
 
-    public void drawRectangle(Tessellator t, int x, int y, int width, int height) {
-        t.vertex(x, y, 0.0);
-        t.vertex(x, (y + height), 0.0);
-        t.vertex((x + width), (y + height), 0.0);
-        t.vertex((x + width), y, 0.0);
+    public val gripY: Int
+        get() {
+            val availableTrackY = (height - gripHeight).toFloat()
+            return ceil((top + (availableTrackY * scrollPercent)).toDouble()).toInt()
+        }
+
+    public val gripHeight: Int
+        get() {
+            val scrollableHeight = max((pageHeight - height).toDouble(), 0.0).toInt()
+            val idealGripHeight = ceil(height.toDouble() * (height / scrollableHeight.toFloat())).toInt()
+            return min(idealGripHeight.toDouble(), height.toDouble()).toInt()
+        }
+
+    public val progress: Float
+        get() =
+            if (shouldRender()) scrollPercent else 0f
+
+    public fun render(delta: Float) {
+        if (!shouldRender()) return
+        update(delta)
+        GL11.glDisable(GL11.GL_TEXTURE_2D)
+        val tessellator = Tessellator.INSTANCE
+        tessellator.startQuads()
+        tessellator.color(8421504, 255)
+        drawRectangle(tessellator, x, y, width, height)
+        tessellator.color(12632256, 255)
+        drawRectangle(tessellator, x, gripY, width, gripHeight)
+        tessellator.draw()
+        GL11.glEnable(GL11.GL_TEXTURE_2D)
     }
 
-    public int gripY() {
-        float availableTrackY = height - gripHeight();
-        return (int) Math.ceil(top + (availableTrackY * scrollPercent));
+    private fun update(delta: Float) {
+        scrollPercent += (targetScrollPercent - scrollPercent) * SMOOTH_SCROLLING_FACTOR * delta
+        scrollPercent = min(1.0, max(0.0, scrollPercent.toDouble())).toFloat()
     }
 
-    public int gripHeight() {
-        int scrollableHeight = Math.max(pageHeight - height, 0);
-        int idealGripHeight = (int) Math.ceil((double) height * (height / (float) scrollableHeight));
-        return Math.min(idealGripHeight, height);
+    public fun isMouseOver(mouseX: Int, mouseY: Int): Boolean {
+        return mouseX >= x && mouseX < (x + width) && mouseY >= y && mouseY <= (y + height)
     }
 
-    public float progress() {
-        return render ? scrollPercent : 0.f;
+    public fun onClick(mouseX: Int, mouseY: Int, button: Int) {
+        if (!shouldRender() || button != 0 || !isMouseOver(mouseX, mouseY)) return
+        val y = max(0.0, (mouseY - this.y).toDouble()).toFloat()
+        val ratio = y / height
+        this.targetScrollPercent = max(0.0, min(1.0, ratio.toDouble())).toFloat()
     }
 
-    public void render(float delta) {
-        if (!render)
-            return;
-        update(delta);
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        Tessellator tessellator = Tessellator.INSTANCE;
-        tessellator.startQuads();
-        tessellator.color(8421504, 255);
-        drawRectangle(tessellator, x, y, width, height);
-        tessellator.color(12632256, 255);
-        drawRectangle(tessellator, x, gripY(), width, gripHeight());
-        tessellator.draw();
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
+    public fun onScroll(amount: Int) {
+        this.targetScrollPercent = max(0.0, min(1.0, targetScrollPercent + amount.toDouble() / 8)).toFloat()
     }
 
-    private void update(float delta) {
-        scrollPercent += (targetScrollPercent - scrollPercent) * SMOOTH_SCROLLING_FACTOR * delta;
-        scrollPercent = Math.min(1.0f, Math.max(0.0f, scrollPercent));
-    }
-
-    public boolean isMouseOver(int mouseX, int mouseY) {
-        return mouseX >= x && mouseX < (x + width) && mouseY >= y && mouseY <= (y + height);
-    }
-
-    public void onClick(int mouseX, int mouseY, int button) {
-        if (!render || button != 0 || !isMouseOver(mouseX, mouseY))
-            return;
-        float y = Math.max(0, mouseY - this.y);
-        float ratio = y / height;
-        this.targetScrollPercent = (float) Math.max(0, Math.min(1.0, ratio));
-    }
-
-    public void onScroll(int amount) {
-        this.targetScrollPercent = (float) Math.max(0, Math.min(1.0, targetScrollPercent + (double) amount / 8));
+    private companion object {
+        private const val SMOOTH_SCROLLING_FACTOR = 0.1f
     }
 }

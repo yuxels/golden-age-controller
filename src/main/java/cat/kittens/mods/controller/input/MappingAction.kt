@@ -1,119 +1,95 @@
-package cat.kittens.mods.controller.input;
-
-import com.google.common.collect.ImmutableList;
+package cat.kittens.mods.controller.input
 
 /**
  * Provides action execution and information about a mapping.
  */
 public interface MappingAction {
-    static MappingAction inGame(Id id, MappingActionExecutor executor) {
-        return create(id, MappingActionContext.listOf(MappingActionContext.IN_GAME), false, executor);
-    }
-
-    static MappingAction inGame(String id, MappingActionExecutor executor) {
-        return inGame(Id.fromString(id), executor);
-    }
-
-    static MappingAction inGame(String id, boolean internal, MappingActionExecutor executor) {
-        return create(Id.fromString(id), MappingActionContext.listOf(MappingActionContext.IN_GAME), internal, executor);
-    }
-
-    static MappingAction inGame(Id id, boolean internal, MappingActionExecutor executor) {
-        return create(id, MappingActionContext.listOf(MappingActionContext.IN_GAME), internal, executor);
-    }
-
-    static MappingAction create(
-            Id id, ImmutableList<MappingActionContext> contexts, MappingActionExecutor executor
-    ) {
-        return create(id, contexts, false, executor);
-    }
-
-    static MappingAction create(
-            String id, ImmutableList<MappingActionContext> contexts, MappingActionExecutor executor
-    ) {
-        return create(Id.fromString(id), contexts, false, executor);
-    }
-
-    static MappingAction create(
-            String id, ImmutableList<MappingActionContext> contexts, boolean internal, MappingActionExecutor executor
-    ) {
-        return create(Id.fromString(id), contexts, internal, executor);
-    }
-
-    static MappingAction create(
-            Id id, ImmutableList<MappingActionContext> contexts,
-            boolean internal, MappingActionExecutor executor
-    ) {
-        return new MappingAction() {
-            @Override
-            public Id id() {
-                return id;
-            }
-
-            @Override
-            public ImmutableList<MappingActionContext> contexts() {
-                return contexts;
-            }
-
-            @Override
-            public MappingActionExecutor executor() {
-                return executor;
-            }
-
-            @Override
-            public boolean isExecutorInternalUseOnly() {
-                return internal;
-            }
-        };
-    }
-
     /**
      * Unique identification for this action.
      */
-    Id id();
+    public val id: Id
 
     /**
      * Contexts where this mapping action could be executed.
      */
-    ImmutableList<MappingActionContext> contexts();
+    public val contexts: Set<MappingActionContext>
 
     /**
      * Whether this mapping has an executor that is made for internal-use only.
      */
-    boolean isExecutorInternalUseOnly();
+    public val isExecutorInternalUseOnly: Boolean
 
-    MappingActionExecutor executor();
+    public val executor: MappingActionExecutor
 
-    interface Id {
-        static Id fromString(String value) {
-            return new Id() {
-                @Override
-                public String toString() {
-                    return value;
-                }
+    public interface Id {
+        override fun toString(): String
 
-                @Override
-                public boolean equals(Object obj) {
-                    if (obj instanceof Id id) {
-                        return id.toString().equals(toString());
+        override fun equals(other: Any?): Boolean
+
+        override fun hashCode(): Int
+
+        public companion object {
+            public fun fromString(value: String): Id {
+                return object : Id {
+                    override fun toString(): String {
+                        return value
                     }
-                    return false;
-                }
 
-                @Override
-                public int hashCode() {
-                    return value.hashCode();
+                    override fun equals(other: Any?): Boolean {
+                        if (other is Id) {
+                            return other.toString() == toString()
+                        }
+                        return false
+                    }
+
+                    override fun hashCode(): Int {
+                        return value.hashCode()
+                    }
                 }
-            };
+            }
         }
+    }
 
-        @Override
-        String toString();
+    public companion object {
+        public fun inGame(id: Id, executor: MappingActionExecutor): MappingAction =
+            invoke(id, setOf(MappingActionContext.InGame), false, executor)
 
-        @Override
-        boolean equals(Object other);
+        public fun inGame(id: String, executor: MappingActionExecutor): MappingAction =
+            inGame(Id.fromString(id), executor)
 
-        @Override
-        int hashCode();
+        public fun inGame(id: String, internal: Boolean, executor: MappingActionExecutor): MappingAction =
+            invoke(Id.fromString(id), setOf(MappingActionContext.InGame), internal, executor)
+
+        public fun inGame(id: Id, internal: Boolean, executor: MappingActionExecutor): MappingAction =
+            invoke(id, setOf(MappingActionContext.InGame), internal, executor)
+
+        @JvmName("create")
+        public operator fun invoke(
+            id: Id, contexts: Set<MappingActionContext>, executor: MappingActionExecutor
+        ): MappingAction = invoke(id, contexts, false, executor)
+
+        @JvmName("create")
+        public operator fun invoke(
+            id: String, contexts: Set<MappingActionContext>, executor: MappingActionExecutor
+        ): MappingAction = invoke(Id.fromString(id), contexts, false, executor)
+
+        @JvmName("create")
+        public operator fun invoke(
+            id: String,
+            contexts: Set<MappingActionContext>,
+            internal: Boolean,
+            executor: MappingActionExecutor
+        ): MappingAction = invoke(Id.fromString(id), contexts, internal, executor)
+
+        @JvmName("create")
+        public operator fun invoke(
+            id: Id, contexts: Set<MappingActionContext>,
+            internal: Boolean, executor: MappingActionExecutor
+        ): MappingAction = object : MappingAction {
+            override val id: Id = id
+            override val contexts: Set<MappingActionContext> = contexts
+            override val executor: MappingActionExecutor = executor
+            override val isExecutorInternalUseOnly: Boolean = internal
+        }
     }
 }

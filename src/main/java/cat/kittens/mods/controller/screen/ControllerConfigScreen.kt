@@ -1,80 +1,72 @@
-package cat.kittens.mods.controller.screen;
+@file:JvmName("ControllerConfigScreen")
 
-import cat.kittens.mods.controller.ControllerSupport;
-import cat.kittens.mods.controller.lib.IGamepadDevice;
-import cat.kittens.mods.controller.lib.IGamepadDeviceId;
-import cat.kittens.mods.controller.ui.ScrollableScreen;
-import cat.kittens.mods.controller.ui.ScrollableScreenComponent;
-import cat.kittens.mods.controller.ui.ScrollableScreenComponentColumn;
-import cat.kittens.mods.controller.ui.ScrollableScreenLayout;
+package cat.kittens.mods.controller.screen
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Supplier;
+import cat.kittens.mods.controller.ControllerSupport
+import cat.kittens.mods.controller.config.ControllerModConfig
+import cat.kittens.mods.controller.dsl.scrollableScreen
+import cat.kittens.mods.controller.lib.GenericGamepadDeviceType
+import cat.kittens.mods.controller.ui.ScrollableScreen
 
-public class ControllerConfigScreen {
-    private static String id(IGamepadDevice<IGamepadDeviceId> device) {
-        return "[" + device.id().location().vendor() + ":" + device.id().location().product() + "] " +
-                device.id().name();
+public val GenericGamepadDeviceType.uiId: String
+    get() = "[" + id.location.vendor + ":" + id.location.product + "] " + id.name
+
+@JvmName("screen")
+public fun controllerConfigScreen(): ScrollableScreen = scrollableScreen("Controller Support") {
+    layout {
+        x = 8
+        y = 8
     }
-    private static void controllerComponent(List<ScrollableScreenComponent> list) {
-        list.add(ScrollableScreenComponent.text()
-                .message("Select a controller to be used")
-                .backgroundColor(-1));
-        list.add(ScrollableScreenComponent.dropdown()
-                .selectedValue(
-                        ControllerSupport.support().manager().currentController().map(ControllerConfigScreen::id)
-                                .orElse("No controller found.")
-                )
-                .options(ControllerSupport.support().manager().findAllGamepads()
-                        .stream().map(ControllerConfigScreen::id)
-                        .toList())
-                .onSelect((ctx, option) -> {
-                    for (var gamepad : ControllerSupport.support().manager().findAllGamepads()) {
-                        if (option.equals(id(gamepad))) {
-                            ControllerSupport.support().manager().setCurrentController(gamepad);
-                            break;
-                        }
-                    }
-                })
-        );
-        list.add(ScrollableScreenComponent.gap());
+    left {
+        componentLayout {
+            x = 8
+            y = 8
+        }
+        top + button {
+            message = "Back to Main Menu"
+            fitDimensions(20)
+            onClick = { ctx, _, _ ->
+                ctx.minecraft.currentScreen = ctx.renderContext.previousScreen
+            }
+        }
+        top + text("Settings")
     }
-
-    private static List<ScrollableScreenComponent> right() {
-        var list = new ArrayList<ScrollableScreenComponent>();
-        controllerComponent(list);
-        return list;
+    right {
+        componentLayout {
+            x = 8
+            y = 8
+        }
+        top + text("Select a controller to be used")
+        top + dropdown {
+            selectedValue = ControllerSupport.manager.currentController?.uiId ?: "No controller found"
+            ControllerSupport.manager.findAllGamepads().getOrNull()?.forEach {
+                options.add(it.uiId)
+            }
+            onSelect = { _, option ->
+                val gamepad = ControllerSupport.manager.findAllGamepads().getOrNull()?.firstOrNull {
+                    it.uiId == option
+                }
+                if (gamepad != null)
+                    ControllerSupport.manager.currentController = gamepad
+            }
+        }
+        top + slider {
+            min = 5
+            max = 50
+            current = (ControllerSupport.config.rightStickXSensitivity / ControllerModConfig.SENS_MULTIPLIER).toInt()
+            message = "Horizontal sensitivity"
+            onChange = { ctx, _, curr ->
+                ControllerSupport.config.rightStickXSensitivity = curr * ControllerModConfig.SENS_MULTIPLIER
+            }
+        }
+        top + slider {
+            min = 5
+            max = 50
+            current = (ControllerSupport.config.rightStickYSensitivity / ControllerModConfig.SENS_MULTIPLIER).toInt()
+            message = "Vertical sensitivity"
+            onChange = { ctx, _, curr ->
+                ControllerSupport.config.rightStickYSensitivity = curr * ControllerModConfig.SENS_MULTIPLIER
+            }
+        }
     }
-
-    public static ScrollableScreen screen() {
-        var layout = ScrollableScreenLayout.create()
-                .withXPadding(8)
-                .withYPadding(8);
-        Supplier<ScrollableScreenComponentColumn> left = () ->
-                new ScrollableScreenComponentColumn(
-                        List.of(
-                                ScrollableScreenComponent.button()
-                                        .message("Back to Main Menu")
-                                        .fitDimensions(20)
-                                        .onClick((ctx, mX, mY) -> {
-                                            ctx.minecraft().currentScreen = ctx.previousScreen();
-                                        }),
-                                ScrollableScreenComponent.text()
-                                        .message("Settings")
-                        ),
-                        List.of(),
-                        layout,
-                        8,
-                        true
-                );
-        Supplier<ScrollableScreenComponentColumn> right = () -> new ScrollableScreenComponentColumn(
-                right(),
-                List.of(),
-                layout,
-                8,
-                true
-        );
-        return new ScrollableScreen(layout, "Controller Support", left, right);
-    }
-}
+}.build()

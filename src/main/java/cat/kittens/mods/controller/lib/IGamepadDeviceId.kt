@@ -1,19 +1,16 @@
-package cat.kittens.mods.controller.lib;
+package cat.kittens.mods.controller.lib
 
 /**
  * An object that uniquely identifies an input device within an Input API.
  */
 public interface IGamepadDeviceId {
-    @Override
-    int hashCode();
+    override fun hashCode(): Int
 
-    @Override
-    boolean equals(Object other);
+    override fun equals(other: Any?): Boolean
 
-    @Override
-    public String toString();
+    override fun toString(): String
 
-    ControllerLocation location();
+    public val location: ControllerLocation
 
-    String name();
+    public val name: String
 }

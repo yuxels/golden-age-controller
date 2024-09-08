@@ -1,42 +1,27 @@
-package cat.kittens.mods.controller;
+package cat.kittens.mods.controller
 
-import net.fabricmc.loader.api.FabricLoader;
-import org.objectweb.asm.tree.ClassNode;
-import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
-import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
+import net.fabricmc.loader.api.FabricLoader
+import org.objectweb.asm.tree.ClassNode
+import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin
+import org.spongepowered.asm.mixin.extensibility.IMixinInfo
 
-import java.util.List;
-import java.util.Set;
+public class ControllerModMixinConfigPlugin : IMixinConfigPlugin {
+    override fun onLoad(mixinPackage: String): Unit = Unit
 
-public class ControllerModMixinConfigPlugin implements IMixinConfigPlugin {
-    @Override
-    public void onLoad(String mixinPackage) {
-    }
+    override fun getRefMapperConfig(): String? = null
 
-    @Override
-    public String getRefMapperConfig() {
-        return null;
-    }
+    override fun shouldApplyMixin(targetClassName: String, mixinClassName: String): Boolean =
+        mixinClassName != "ModMenuMixin" || FabricLoader.getInstance().isModLoaded("modmenu")
 
-    @Override
-    public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        return !mixinClassName.equals("ModMenuMixin") || FabricLoader.getInstance().isModLoaded("modmenu");
-    }
+    override fun acceptTargets(myTargets: Set<String>, otherTargets: Set<String>): Unit = Unit
 
-    @Override
-    public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) {
-    }
+    override fun getMixins(): List<String>? = null
 
-    @Override
-    public List<String> getMixins() {
-        return null;
-    }
+    override fun preApply(
+        targetClassName: String, targetClass: ClassNode, mixinClassName: String, mixinInfo: IMixinInfo
+    ): Unit = Unit
 
-    @Override
-    public void preApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
-    }
-
-    @Override
-    public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
-    }
+    override fun postApply(
+        targetClassName: String, targetClass: ClassNode, mixinClassName: String, mixinInfo: IMixinInfo
+    ): Unit = Unit
 }

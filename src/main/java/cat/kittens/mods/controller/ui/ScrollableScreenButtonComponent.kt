@@ -1,97 +1,55 @@
-package cat.kittens.mods.controller.ui;
+package cat.kittens.mods.controller.ui
 
-import cat.kittens.mods.controller.mixin.accessor.MinecraftAccessor;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import org.apache.logging.log4j.util.TriConsumer;
+import cat.kittens.mods.controller.mixin.accessor.ButtonWidgetAccessor
+import cat.kittens.mods.controller.mixin.accessor.MinecraftAccessor
+import net.minecraft.client.gui.widget.ButtonWidget
+import java.awt.Color
 
-public class ScrollableScreenButtonComponent implements ScrollableScreenComponent {
-    private String message;
-    private int textColor;
-    private int width, height;
-    private TriConsumer<ScrollableScreenRenderContext, Integer, Integer> onClick;
-    private ButtonWidget widget;
+public class ScrollableScreenButtonComponent : ScrollableScreenComponent {
+    override var context: ComponentContext? = null
 
-    public ScrollableScreenButtonComponent() {
-        this.message = "Hello, world!";
-        this.textColor = 14737632;
-        this.onClick = (ctx, mouseX, mouseY) -> {};
-        dimensions(300, 20);
+    public var message: String = "Hello, world!"
+    public var textColor: Color = Color(14737632)
+    public override var width: Int = 300
+    public override var height: Int = 20
+    public var onClick: (ctx: ComponentContext, mouseX: Int, mouseY: Int) -> Unit = { _, _, _ -> }
+
+    private lateinit var widget: ButtonWidget
+
+    public fun dimensions(width: Int, height: Int): ScrollableScreenButtonComponent {
+        this.width = width
+        this.height = height
+        return this
     }
 
-    public ScrollableScreenButtonComponent dimensions(int width, int height) {
-        this.width = width;
-        this.height = height;
-        return this;
+    public fun fitDimensions(height: Int): ScrollableScreenButtonComponent {
+        this.width = MinecraftAccessor.instance().textRenderer.getWidth(message) + 20
+        this.height = height
+        return this
     }
 
-    public ScrollableScreenButtonComponent fitDimensions(int height) {
-        this.width = MinecraftAccessor.instance().textRenderer.getWidth(message) + 20;
-        this.height = height;
-        return this;
-    }
-
-    public ScrollableScreenButtonComponent message(String message) {
-        this.message = message;
-        return this;
-    }
-
-    public ScrollableScreenButtonComponent scale(float scale) {
-        return this;
-    }
-
-    public int textColor() {
-        return textColor;
-    }
-
-    public ScrollableScreenButtonComponent textColor(int textColor) {
-        this.textColor = textColor;
-        return this;
-    }
-
-    public ScrollableScreenButtonComponent onClick(TriConsumer<ScrollableScreenRenderContext, Integer, Integer> onClick) {
-        this.onClick = onClick;
-        return this;
-    }
-
-    private ScrollableScreenRenderContext ctx;;
-
-    @Override
-    public void init(
-            ScrollableScreen screen, ScrollableScreenRenderContext ctx,
-            int x, int y, int x2, int y2
-    ) {
-        this.ctx = ctx;
-        this.widget = new ButtonWidget(10000, x, y, width, height, message);
-    }
-
-    @Override
-    public void render(int mouseX, int mouseY, float delta) {
-        widget.render(ctx.minecraft(), mouseX, mouseY);
-    }
-
-    @Override
-    public boolean isMouseOver(int mouseX, int mouseY) {
-        if (widget == null)
-            return false;
-        return widget.isMouseOver(MinecraftAccessor.instance(), mouseX, mouseY);
-    }
-
-    @Override
-    public boolean handleClick(ScrollableScreen screen, ScrollableScreenRenderContext ctx, int x, int y, int button) {
-        if (button == 0) {
-            onClick.accept(ctx, x, y);
-            return true;
+    override fun render(mouseX: Int, mouseY: Int, delta: Float) {
+        val ctx = context ?: return
+        if (!::widget.isInitialized)
+            this.widget = ButtonWidget(10000, ctx.coordinates.x, ctx.coordinates.y, width, height, message)
+        widget.x = ctx.coordinates.x
+        widget.y = ctx.coordinates.y
+        (widget as ButtonWidgetAccessor).let {
+            it.width(width)
+            it.height(height)
+            it.text(message)
         }
-        return false;
+        widget.render(MinecraftAccessor.instance(), mouseX, mouseY)
     }
 
-    @Override
-    public int width(ScrollableScreenRenderContext ctx) {
-        return width;
-    }
+    override fun isMouseOver(mouseX: Int, mouseY: Int): Boolean =
+        widget.isMouseOver(MinecraftAccessor.instance(), mouseX, mouseY)
 
-    @Override
-    public int height(ScrollableScreenRenderContext ctx) {
-        return height;
+    override fun handleClick(x: Int, y: Int, button: Int): Boolean {
+        if (button == 0) {
+            onClick(context ?: return false, x, y)
+            return true
+        }
+        return false
     }
 }

@@ -1,6 +1,6 @@
-# babric-controller
+# golden-age-controller
 
-SDL3-based controller support modification for Minecraft b1.7.3.
+SDL3-based controller support modification for golden age Minecraft.
 
 ## Credits
 
@@ -18,3 +18,7 @@ SDL3-based controller support modification for Minecraft b1.7.3.
 - [ ] Controller configuration UI
 - [ ] Gyroscopic aiming support
 - [ ] Flick stick support
+
+## Version support status
+
+- [x] Babric, b1.7.3

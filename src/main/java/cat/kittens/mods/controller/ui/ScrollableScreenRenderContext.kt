@@ -1,7 +1,11 @@
-package cat.kittens.mods.controller.ui;
+package cat.kittens.mods.controller.ui
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.Screen
 
-public record ScrollableScreenRenderContext(Minecraft minecraft, int width, int height, Screen previousScreen) {
-}
+public data class ScrollableScreenRenderContext(
+    var width: Int,
+    var height: Int,
+    var top: Int,
+    var bottom: Int,
+    var previousScreen: Screen?
+)

@@ -2,27 +2,31 @@
   "schemaVersion": 1,
   "id": "controller",
   "version": "${version}",
-  "name": "Controller Support",
-  "description": "SDL3-based controller mod for Babric.",
+  "name": "Golden Age: Controller",
+  "description": "SDL3-based controller support mod for \"golden age\" Minecraft versions.",
   "authors": [
     "ayuxified <ayuxified@kittens.cat>"
   ],
   "contact": {
-    "homepage": "https://codeberg.org/ayuxified/babric-controller",
-    "sources": "https://codeberg.org/ayuxified/babric-controller",
-    "issues": "https://codeberg.org/ayuxified/babric-controller/issues"
+    "homepage": "https://codeberg.org/ayuuxia/golden-age-controller",
+    "sources": "https://codeberg.org/ayuuxia/golden-age-controller",
+    "issues": "https://codeberg.org/ayuuxia/golden-age-controller/issues"
   },
   "license": "MIT",
   "environment": "client",
   "entrypoints": {
-    "client": [
-      "cat.kittens.mods.controller.ControllerSupport"
+    "stationapi:event_bus_client": [
+      {
+        "adapter": "kotlin",
+        "value": "cat.kittens.mods.controller.ControllerSupport"
+      }
     ]
   },
   "mixins": [
     "controller.mixins.json"
   ],
   "depends": {
-    "minecraft": "1.0.0-beta.7.3"
+    "minecraft": "1.0.0-beta.7.3",
+    "fabric-language-kotlin": ">=1.12.0+kotlin.2.0.10"
   }
 }

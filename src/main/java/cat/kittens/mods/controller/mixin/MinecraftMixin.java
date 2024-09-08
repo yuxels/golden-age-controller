@@ -4,13 +4,9 @@ import cat.kittens.mods.controller.ControllerSupport;
 import cat.kittens.mods.controller.input.MappingActions;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.client.Minecraft;
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Minecraft.class)
 public abstract class MinecraftMixin {
@@ -21,48 +17,6 @@ public abstract class MinecraftMixin {
     )
     void controller$preventLWJGL2ControllerInit() {
     }
-    // end
-
-    // Tick controller inputs.
-    @Inject(
-            method = "run",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/class_555;method_1844(F)V"
-            )
-    )
-    void controller$tick(CallbackInfo callback) {
-        ControllerSupport.support().inputProcessing().tickMappings();
-    }
-    // end
-
-    // Bring back keyboard input method.
-    @Inject(
-            method = "tick",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/entity/player/ClientPlayerEntity;method_136(IZ)V",
-                    shift = At.Shift.AFTER
-            )
-    )
-    void controller$keyboard$setCurrentInputMethod(CallbackInfo ci) {
-        if (Keyboard.getEventKeyState())
-            ControllerSupport.support().setCurrentInputMethod(false);
-    }
-
-    @Inject(
-            method = "tick",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/client/Minecraft;method_2103()V",
-                    shift = At.Shift.BEFORE
-            )
-    )
-    void controller$mouse$setCurrentInputMethod$2(CallbackInfo ci) {
-        if (Mouse.getEventButtonState())
-            ControllerSupport.support().setCurrentInputMethod(false);
-    }
-    // end
 
     // Inject internal controller mapping logic.
     @ModifyExpressionValue(
@@ -74,16 +28,14 @@ public abstract class MinecraftMixin {
             )
     )
     boolean controller$injectControllerBreak(boolean original) {
-        if (original || !ControllerSupport.support().isCurrentInputMethodController()) {
-            ControllerSupport.support().setCurrentInputMethod(false);
+        if (original || !ControllerSupport.INSTANCE.isControllerActive()) {
             return original;
         }
-        var controller = ControllerSupport.support().manager().currentController().orElse(null);
+        var controller = ControllerSupport.INSTANCE.getManager().getCurrentController();
         if (controller == null)
             return false;
-        return ControllerSupport.support().mapping().find(MappingActions.BREAK)
-                .flatMap(m -> m.getContextFor(controller))
-                .isPresent();
+        var action = ControllerSupport.INSTANCE.getMappingView().get(MappingActions.BREAK);
+        return action != null && action.getContextFor(controller) != null;
     }
 
     @ModifyExpressionValue(
@@ -95,16 +47,15 @@ public abstract class MinecraftMixin {
             )
     )
     boolean controller$injectControllerHoldBreak(boolean original) {
-        if (original || !ControllerSupport.support().isCurrentInputMethodController()) {
-            ControllerSupport.support().setCurrentInputMethod(false);
+        if (original || !ControllerSupport.INSTANCE.isControllerActive()) {
+            ControllerSupport.INSTANCE.setControllerActive(false);
             return original;
         }
-        var controller = ControllerSupport.support().manager().currentController().orElse(null);
+        var controller = ControllerSupport.INSTANCE.getManager().getCurrentController();
         if (controller == null)
             return false;
-        return ControllerSupport.support().mapping().find(MappingActions.BREAK)
-                .flatMap(m -> m.getContextFor(controller))
-                .isPresent();
+        var action = ControllerSupport.INSTANCE.getMappingView().get(MappingActions.BREAK);
+        return action != null && action.getContextFor(controller) != null;
     }
 
     @ModifyExpressionValue(
@@ -116,16 +67,15 @@ public abstract class MinecraftMixin {
             )
     )
     boolean controller$injectControllerInteract(boolean original) {
-        if (original || !ControllerSupport.support().isCurrentInputMethodController()) {
-            ControllerSupport.support().setCurrentInputMethod(false);
+        if (original || !ControllerSupport.INSTANCE.isControllerActive()) {
+            ControllerSupport.INSTANCE.setControllerActive(false);
             return original;
         }
-        var controller = ControllerSupport.support().manager().currentController().orElse(null);
+        var controller = ControllerSupport.INSTANCE.getManager().getCurrentController();
         if (controller == null)
             return false;
-        return ControllerSupport.support().mapping().find(MappingActions.INTERACT)
-                .flatMap(m -> m.getContextFor(controller))
-                .isPresent();
+        var action = ControllerSupport.INSTANCE.getMappingView().get(MappingActions.INTERACT);
+        return action != null && action.getContextFor(controller) != null;
     }
 
     @ModifyExpressionValue(
@@ -136,7 +86,7 @@ public abstract class MinecraftMixin {
             )
     )
     boolean controller$injectControllerAvailability(boolean original) {
-        return original || ControllerSupport.support().isCurrentInputMethodController();
+        return original || ControllerSupport.INSTANCE.isControllerActive();
     }
     // end
 }

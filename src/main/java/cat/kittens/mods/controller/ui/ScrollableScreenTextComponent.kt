@@ -1,141 +1,58 @@
-package cat.kittens.mods.controller.ui;
+package cat.kittens.mods.controller.ui
 
-import cat.kittens.mods.controller.mixin.accessor.MinecraftAccessor;
-import net.minecraft.client.font.TextRenderer;
-import org.apache.logging.log4j.util.TriConsumer;
-import org.lwjgl.opengl.GL11;
+import cat.kittens.mods.controller.mixin.accessor.MinecraftAccessor
+import org.lwjgl.opengl.GL11
+import java.awt.Color
+import kotlin.math.ceil
 
-public class ScrollableScreenTextComponent implements ScrollableScreenComponent {
-    private String message;
-    private float scale;
-    private ScrollableScreenLayout layout;
-    private int backgroundColor;
-    private int textColor;
-    private int hoverColor;
-    private TriConsumer<ScrollableScreenRenderContext, Integer, Integer> onClick;
+public class ScrollableScreenTextComponent : ScrollableScreenComponent {
+    override var context: ComponentContext? = null
 
-    public static int FONT_SIZE = 7;
+    public var message: String = "Hello, world!"
+    public var scale: Float = 1f
+    public var layout: ScrollableScreenLayout = ScrollableScreenLayout()
+    public var backgroundColor: Color? = Color(-1073741824)
+    public var textColor: Color = Color(14737632)
+    public var hoverColor: Color = Color(16777120)
+    public var onClick: (ctx: ComponentContext, mouseX: Int, mouseY: Int) -> Unit = { _, _, _ -> }
 
-    public ScrollableScreenTextComponent() {
-        this.message = "Hello, world!";
-        this.scale = 1.f;
-        this.layout = ScrollableScreenLayout.create();
-        this.backgroundColor = -1073741824;
-        this.textColor = 14737632;
-        this.hoverColor = 16777120;
-        this.onClick = (ctx, mouseX, mouseY) -> {};
-    }
+    private val renderer get() = MinecraftAccessor.instance().textRenderer
 
-    public ScrollableScreenLayout layout() {
-        return layout;
-    }
-
-    public ScrollableScreenTextComponent layout(ScrollableScreenLayout layout) {
-        this.layout = layout;
-        return this;
-    }
-
-    public String message() {
-        return message;
-    }
-
-    public ScrollableScreenTextComponent message(String message) {
-        this.message = message;
-        return this;
-    }
-
-    public float scale() {
-        return scale;
-    }
-
-    public ScrollableScreenTextComponent scale(float scale) {
-        this.scale = scale;
-        return this;
-    }
-
-    public int backgroundColor() {
-        return backgroundColor;
-    }
-
-    public ScrollableScreenTextComponent backgroundColor(int backgroundColor) {
-        this.backgroundColor = backgroundColor;
-        return this;
-    }
-
-    public int textColor() {
-        return textColor;
-    }
-
-    public ScrollableScreenTextComponent textColor(int textColor) {
-        this.textColor = textColor;
-        return this;
-    }
-
-    public ScrollableScreenTextComponent onClick(TriConsumer<ScrollableScreenRenderContext, Integer, Integer> onClick) {
-        this.onClick = onClick;
-        return this;
-    }
-
-    public int hoverColor() {
-        return hoverColor;
-    }
-
-    public ScrollableScreenTextComponent hoverColor(int hoverColor) {
-        this.hoverColor = hoverColor;
-        return this;
-    }
-
-    private ScrollableScreenRenderContext ctx;
-    private int x, y;
-
-    @Override
-    public void init(
-            ScrollableScreen screen, ScrollableScreenRenderContext ctx,
-            int x, int y, int x2, int y2
-    ) {
-        this.ctx = ctx;
-        this.x = x;
-        this.y = y;
-    }
-
-    private TextRenderer renderer() {
-        return MinecraftAccessor.instance().textRenderer;
-    }
-
-    @Override
-    public void render(int mouseX, int mouseY, float delta) {
-        int width = width(ctx), height = height(ctx);
-        if (backgroundColor != -1) {
-            fillGradient(x, y, x + width, y + height, backgroundColor, backgroundColor);
+    override fun render(mouseX: Int, mouseY: Int, delta: Float) {
+        val ctx = context ?: return
+        if (backgroundColor != null) with(ctx.coordinates) {
+            fillGradient(x, y, x + width, y + height, backgroundColor!!.rgb, backgroundColor!!.rgb)
         }
-        int color = isMouseOver(mouseX, mouseY) ? hoverColor : textColor;
-        GL11.glPushMatrix();
-        GL11.glTranslatef(0, 0, 300);
-        renderer().drawWithShadow(message, x + layout.leftPadding(ctx), y + layout.topPadding(ctx), color);
-        GL11.glPopMatrix();
+        val color = if (isMouseOver(mouseX, mouseY)) hoverColor else textColor
+        GL11.glPushMatrix()
+        GL11.glTranslatef(0f, 0f, 300f)
+        renderer.drawWithShadow(
+            message,
+            ctx.coordinates.x + layout.leftPadding, ctx.coordinates.y + layout.topPadding,
+            color.rgb
+        )
+        GL11.glPopMatrix()
     }
 
-    @Override
-    public boolean isMouseOver(int mouseX, int mouseY) {
-        return mouseX >= x && mouseY >= y && mouseX <= x + width(ctx) && mouseY <= y + height(ctx);
-    }
-
-    @Override
-    public boolean handleClick(ScrollableScreen screen, ScrollableScreenRenderContext ctx, int x, int y, int button) {
+    override fun handleClick(x: Int, y: Int, button: Int): Boolean {
+        val ctx = context ?: return false
         if (button == 0) {
-            onClick.accept(ctx, x, y);
-            return true;
+            onClick(ctx, x, y)
+            return true
         }
-        return false;
+        return false
     }
 
-    @Override
-    public int width(ScrollableScreenRenderContext ctx) {
-        return (int) Math.ceil((renderer().getWidth(message) * scale) + layout.leftPadding(ctx) + layout.rightPadding(ctx));
-    }
+    override val width: Int
+        get() = ceil(
+            ((renderer.getWidth(message) * scale) + layout.leftPadding
+                    + layout.rightPadding).toDouble()
+        ).toInt()
 
-    @Override
-    public int height(ScrollableScreenRenderContext ctx) {
-        return (int) Math.ceil((FONT_SIZE * scale) + layout.topPadding(ctx) + layout.bottomPadding(ctx));
+    override val height: Int
+        get() = ceil(((FONT_SIZE * scale) + layout.topPadding + layout.bottomPadding).toDouble()).toInt()
+
+    public companion object {
+        public const val FONT_SIZE: Int = 7
     }
 }

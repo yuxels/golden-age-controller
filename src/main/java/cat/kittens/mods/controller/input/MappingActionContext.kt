@@ -1,40 +1,32 @@
-package cat.kittens.mods.controller.input;
+package cat.kittens.mods.controller.input
 
-import cat.kittens.mods.controller.mixin.accessor.MinecraftAccessor;
-import com.google.common.collect.ImmutableList;
-import net.minecraft.client.gui.screen.ChatScreen;
-import net.minecraft.client.gui.screen.GameMenuScreen;
-import net.minecraft.client.gui.screen.TitleScreen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
+import cat.kittens.mods.controller.mixin.accessor.MinecraftAccessor
+import net.minecraft.client.gui.screen.ChatScreen
+import net.minecraft.client.gui.screen.GameMenuScreen
+import net.minecraft.client.gui.screen.TitleScreen
+import net.minecraft.client.gui.screen.ingame.HandledScreen
+import net.minecraft.client.gui.screen.ingame.InventoryScreen
 
-public enum MappingActionContext {
-    IN_GAME,
-    INVENTORY,
-    CONTAINER,
-    MAIN_MENU,
-    PAUSE,
-    CHAT,
-    UNKNOWN;
+public enum class MappingActionContext {
+    InGame,
+    Inventory,
+    Container,
+    MainMenu,
+    Pause,
+    Chat,
+    Unknown;
 
-    public static ImmutableList<MappingActionContext> listOf(MappingActionContext... ctx) {
-        return ImmutableList.copyOf(ctx);
-    }
-
-    public static MappingActionContext current() {
-        var screen = MinecraftAccessor.instance() != null ? MinecraftAccessor.instance().currentScreen : null;
-        if (screen == null)
-            return IN_GAME;
-        if (screen instanceof InventoryScreen)
-            return INVENTORY;
-        if (screen instanceof HandledScreen)
-            return CONTAINER;
-        if (screen instanceof GameMenuScreen)
-            return PAUSE;
-        if (screen instanceof ChatScreen)
-            return CHAT;
-        if (screen instanceof TitleScreen)
-            return MAIN_MENU;
-        return UNKNOWN;
+    public companion object {
+        public val current: MappingActionContext
+            get() =
+                when (if (MinecraftAccessor.instance() != null) MinecraftAccessor.instance().currentScreen else null) {
+                    null -> InGame
+                    is InventoryScreen -> Inventory
+                    is HandledScreen -> Container
+                    is GameMenuScreen -> Pause
+                    is ChatScreen -> Chat
+                    is TitleScreen -> MainMenu
+                    else -> Unknown
+                }
     }
 }

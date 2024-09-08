@@ -1,23 +1,23 @@
-package cat.kittens.mods.controller.input;
+package cat.kittens.mods.controller.input
 
-import java.util.concurrent.atomic.AtomicLong;
+public fun interface MappingActionExecutor {
+    public fun perform(ctx: MappingExecutionContext)
 
-public interface MappingActionExecutor {
-    static MappingActionExecutor internal() {
-        return (ctx) -> {
-            throw new RuntimeException("This mapping is meant to be used internally by Mixin injections and cannot be executed directly.");
-        };
-    }
-
-    static MappingActionExecutor withCooldown(long amountInMilliseconds, MappingActionExecutor callback) {
-        AtomicLong lastExecution = new AtomicLong();
-        return (ctx) -> {
-            if (System.currentTimeMillis() > lastExecution.get() + amountInMilliseconds) {
-                callback.perform(ctx);
-                lastExecution.set(System.currentTimeMillis());
+    public companion object {
+        public fun internal(): MappingActionExecutor {
+            return MappingActionExecutor {
+                throw RuntimeException("This mapping is meant to be used internally by Mixin injections and cannot be executed directly.")
             }
-        };
-    }
+        }
 
-    void perform(MappingExecutionContext ctx);
+        public fun withCooldown(amountInMilliseconds: Long, callback: MappingActionExecutor): MappingActionExecutor {
+            var lastExecution = -1L
+            return MappingActionExecutor { ctx ->
+                if (System.currentTimeMillis() > lastExecution + amountInMilliseconds) {
+                    callback.perform(ctx)
+                    lastExecution = System.currentTimeMillis()
+                }
+            }
+        }
+    }
 }

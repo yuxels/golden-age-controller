@@ -1,32 +1,23 @@
-package cat.kittens.mods.controller.input;
+package cat.kittens.mods.controller.input
 
-import cat.kittens.mods.controller.ControllerSupport;
-import com.google.common.collect.ImmutableSet;
-
-import java.util.Optional;
-import java.util.OptionalDouble;
-import java.util.function.Function;
+import cat.kittens.mods.controller.ControllerSupport
+import cat.kittens.mods.controller.lib.GamepadDevice
+import cat.kittens.mods.controller.lib.IGamepadDeviceId
 
 public interface ControllerMappingView {
-    ImmutableSet<ControllerMapping> mappings();
+    public val mappings: Set<ControllerMapping>
 
-    Optional<ControllerMapping> find(MappingAction.Id id);
+    public operator fun get(id: MappingAction.Id): ControllerMapping?
 
-    default Optional<ControllerMapping> find(MappingAction action) {
-        return find(action.id());
+    public operator fun get(action: MappingAction): ControllerMapping? {
+        return get(action.id)
     }
 
-    default OptionalDouble getCurrentValue(MappingAction.Id action) {
-        var controller = ControllerSupport.support().manager().currentController().orElse(null);
-        if (controller == null)
-            return OptionalDouble.empty();
-        var value = find(action).flatMap(m -> m.getContextFor(controller)).map(MappingExecutionContext::value);
-        return value.map(OptionalDouble::of).orElseGet(OptionalDouble::empty);
-    }
-
-    default OptionalDouble getCurrentValue(MappingAction action) {
-        return getCurrentValue(action.id());
-    }
-
-    void overrideMapping(MappingAction.Id id, Function<Optional<ControllerMapping>, ControllerMapping> supplier);
+    public fun overrideMapping(id: MappingAction.Id, supplier: (prev: ControllerMapping?) -> ControllerMapping)
 }
+
+public val ControllerMapping.value: Double?
+    get() {
+        val controller: GamepadDevice<IGamepadDeviceId> = ControllerSupport.manager.currentController ?: return null
+        return getContextFor(controller)?.value
+    }

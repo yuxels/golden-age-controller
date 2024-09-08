@@ -1,7 +1,8 @@
 import de.undercouch.gradle.tasks.download.Download
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    java
+    kotlin("jvm") version libs.versions.fabric.language.kotlin.get().substringAfter("+kotlin.")
     alias(libs.plugins.fabric.loom)
     alias(libs.plugins.babric.loom.extension)
     alias(libs.plugins.download)
@@ -9,7 +10,7 @@ plugins {
 
 base {
     group = "cat.kittens.mods"
-    archivesName = "legacy-controller"
+    archivesName = "golden-age-controller"
 
     // Semantic Versioning: https://semver.org/
     version = "0.1.0"
@@ -42,6 +43,13 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
     toolchain.languageVersion.set(JavaLanguageVersion.of(17))
     withSourcesJar()
+}
+
+
+kotlin {
+    jvmToolchain(17)
+    compilerOptions.jvmTarget.set(JvmTarget.JVM_17)
+    explicitApi()
 }
 
 tasks.withType<JavaCompile> {
@@ -88,6 +96,9 @@ dependencies {
     })
     modImplementation(libs.babric.loader)
     modImplementation(libs.station.api)
+    modImplementation(libs.fabric.language.kotlin) {
+        exclude("net.fabricmc")
+    }
     implementation(libs.sdl4j)
     implementation(libs.bundles.log)
     implementation(libs.commons.lang3)
